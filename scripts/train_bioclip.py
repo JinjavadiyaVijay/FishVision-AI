@@ -36,6 +36,7 @@ from classification.utilities.device import get_device, log_gpu_memory
 from classification.utilities.seed import set_seed
 
 CONFIG_DIR = PROJECT_ROOT / "classification" / "config"
+logger = logging.getLogger(__name__)
 
 
 def load_configs() -> dict:
