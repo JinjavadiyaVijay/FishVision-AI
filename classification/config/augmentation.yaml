@@ -1,0 +1,55 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# augmentation.yaml — Biologically valid image transforms
+# ──────────────────────────────────────────────────────────────────────────────
+
+preprocessing:
+  # Resize shortest edge to this size before cropping
+  resize_size: 256
+  crop_size: 224
+  interpolation: "bicubic"
+
+  # CLIP normalization (used by BioCLIP 2, SigLIP, etc.)
+  normalize:
+    mean: [0.48145466, 0.4578275, 0.40821073]
+    std: [0.26862954, 0.26130258, 0.27577711]
+
+train_augmentation:
+  horizontal_flip:
+    enabled: true
+    p: 0.5
+
+  rotation:
+    enabled: true
+    degrees: 15
+
+  color_jitter:
+    enabled: true
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.15
+    hue: 0.05
+
+  gaussian_blur:
+    enabled: true
+    kernel_size: 3
+    sigma: [0.5, 1.0]
+    p: 0.3
+
+  random_erasing:
+    enabled: true
+    p: 0.2
+    scale: [0.02, 0.10]
+    ratio: [0.3, 3.3]
+
+  # Augmentations explicitly disabled for biological reasons
+  vertical_flip:
+    enabled: false
+    reason: "Fish do not swim upside down"
+
+  perspective:
+    enabled: false
+    reason: "Distorts body proportions used for species identification"
+
+val_augmentation:
+  # Validation uses deterministic preprocessing only
+  # Resize → CenterCrop → Normalize

@@ -1,0 +1,34 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# model.yaml — Backbone and classifier head configuration
+# ──────────────────────────────────────────────────────────────────────────────
+
+backbone:
+  # Backend library: "open_clip" | "timm" | "transformers"
+  library: "open_clip"
+
+  # Model identifier (library-specific)
+  #   open_clip  → "hf-hub:imageomics/bioclip-2"
+  #   timm       → "vit_large_patch14_dinov2.lvd142m"
+  #   transformers → "google/siglip-large-patch16-384"
+  name: "hf-hub:imageomics/bioclip-2"
+
+  # Input image resolution (will be auto-detected from model if possible)
+  image_size: 224
+
+  # Embedding dimension (auto-detected at runtime; override only if needed)
+  # embed_dim: 768
+
+classifier:
+  # Head type: "linear" | "mlp"
+  type: "linear"
+  dropout: 0.1
+
+lora:
+  enabled: true
+  rank: 16
+  alpha: 32
+  dropout: 0.1
+  # Target modules are auto-detected from the backbone architecture.
+  # Override only if auto-detection fails.
+  # target_modules: ["attn.in_proj_weight", "attn.out_proj"]
+  bias: "none"
