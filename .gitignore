@@ -2,6 +2,7 @@
 train/
 valid/
 test/
+OzFish/
 # logs 
 logs/
 
@@ -16,3 +17,6 @@ __pycache__/
 
 # Environment
 .env
+
+# Private Documentation
+private_docs/
