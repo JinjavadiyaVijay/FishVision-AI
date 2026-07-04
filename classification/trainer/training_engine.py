@@ -1,0 +1,582 @@
+"""
+training_engine.py — Production training loop for species classification.
+
+Model-agnostic: works with any BackboneWrapper + ClassifierHead combination.
+Supports LoRA, mixed precision, gradient accumulation, checkpointing, early
+stopping, and resume training.
+
+Hardware target: RTX 3050 6GB VRAM.
+"""
+
+from __future__ import annotations
+
+import csv
+import json
+import logging
+import shutil
+import time
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
+
+import numpy as np
+import torch
+import torch.nn as nn
+import yaml
+from torch.amp import GradScaler, autocast
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
+from classification.models.classifier import SpeciesClassifier
+from classification.utilities.device import log_gpu_memory, get_system_info
+
+logger = logging.getLogger(__name__)
+
+
+class TrainingEngine:
+    """
+    Production training loop for species classification.
+
+    Parameters
+    ----------
+    model : SpeciesClassifier
+        The backbone + classifier head model.
+    train_loader : DataLoader
+        Training data loader.
+    val_loader : DataLoader
+        Validation data loader.
+    config : dict
+        Full merged configuration dict.
+    experiment_dir : Path
+        Directory for this experiment run (checkpoints, logs, metrics).
+    class_names : list[str]
+        Ordered species names for class index mapping.
+    device : torch.device
+        Target device.
+    class_weights : torch.Tensor, optional
+        Per-class loss weights for imbalance handling.
+    """
+
+    def __init__(
+        self,
+        model: SpeciesClassifier,
+        train_loader: DataLoader,
+        val_loader: DataLoader,
+        config: dict,
+        experiment_dir: Path,
+        class_names: list[str],
+        device: torch.device,
+        class_weights: Optional[torch.Tensor] = None,
+    ) -> None:
+        self.model = model.to(device)
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+        self.config = config
+        self.experiment_dir = Path(experiment_dir)
+        self.class_names = class_names
+        self.device = device
+
+        # Sub-directories
+        self.checkpoint_dir = self.experiment_dir / "checkpoints"
+        self.logs_dir = self.experiment_dir / "logs"
+        self.metrics_dir = self.experiment_dir / "metrics"
+        self.plots_dir = self.experiment_dir / "plots"
+        self.config_dir = self.experiment_dir / "config"
+
+        for d in (self.checkpoint_dir, self.logs_dir, self.metrics_dir,
+                  self.plots_dir, self.config_dir):
+            d.mkdir(parents=True, exist_ok=True)
+
+        # Training config
+        train_cfg = config.get("training", {})
+        self.epochs = train_cfg.get("epochs", 30)
+        self.grad_accum_steps = train_cfg.get("gradient_accumulation_steps", 4)
+
+        # Precision
+        prec_cfg = config.get("precision", {})
+        self.use_amp = prec_cfg.get("mixed_precision", True)
+        self.grad_clip_norm = prec_cfg.get("gradient_clip_max_norm", 1.0)
+
+        # Loss function
+        loss_cfg = config.get("loss", {})
+        label_smoothing = loss_cfg.get("label_smoothing", 0.1)
+        if class_weights is not None and loss_cfg.get("use_class_weights", True):
+            self.criterion = nn.CrossEntropyLoss(
+                weight=class_weights.to(device),
+                label_smoothing=label_smoothing,
+            )
+            logger.info("Loss: CrossEntropy with label_smoothing=%.2f + class weights",
+                         label_smoothing)
+        else:
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
+            logger.info("Loss: CrossEntropy with label_smoothing=%.2f", label_smoothing)
+
+        # Optimizer
+        opt_cfg = config.get("optimizer", {})
+        trainable_params = [p for p in self.model.parameters() if p.requires_grad]
+        self.optimizer = AdamW(
+            trainable_params,
+            lr=opt_cfg.get("learning_rate", 2e-4),
+            weight_decay=opt_cfg.get("weight_decay", 0.01),
+            betas=tuple(opt_cfg.get("betas", [0.9, 0.999])),
+            eps=opt_cfg.get("eps", 1e-8),
+        )
+        logger.info(
+            "Optimizer: AdamW, lr=%.1e, weight_decay=%.4f, %d param groups",
+            opt_cfg.get("learning_rate", 2e-4),
+            opt_cfg.get("weight_decay", 0.01),
+            len(self.optimizer.param_groups),
+        )
+
+        # Scheduler
+        sched_cfg = config.get("scheduler", {})
+        total_steps = self.epochs * len(self.train_loader) // self.grad_accum_steps
+        warmup_steps = sched_cfg.get("warmup_steps", 200)
+        min_lr_ratio = sched_cfg.get("min_lr_ratio", 0.01)
+
+        warmup_scheduler = LinearLR(
+            self.optimizer, start_factor=0.01, end_factor=1.0,
+            total_iters=warmup_steps,
+        )
+        cosine_scheduler = CosineAnnealingLR(
+            self.optimizer, T_max=max(total_steps - warmup_steps, 1),
+            eta_min=opt_cfg.get("learning_rate", 2e-4) * min_lr_ratio,
+        )
+        self.scheduler = SequentialLR(
+            self.optimizer,
+            schedulers=[warmup_scheduler, cosine_scheduler],
+            milestones=[warmup_steps],
+        )
+        logger.info(
+            "Scheduler: CosineWithWarmup, warmup=%d steps, total=%d steps",
+            warmup_steps, total_steps,
+        )
+
+        # AMP scaler
+        self.scaler = GradScaler(enabled=self.use_amp)
+
+        # Early stopping
+        es_cfg = config.get("early_stopping", {})
+        self.early_stopping_enabled = es_cfg.get("enabled", True)
+        self.patience = es_cfg.get("patience", 7)
+        self.min_delta = es_cfg.get("min_delta", 0.001)
+        self.monitor_metric = es_cfg.get("monitor", "val_accuracy")
+
+        # State tracking
+        self.current_epoch = 0
+        self.global_step = 0
+        self.best_metrics: dict[str, float] = {
+            "val_accuracy": 0.0,
+            "val_f1_macro": 0.0,
+        }
+        self.patience_counter = 0
+        self.history: list[dict[str, Any]] = []
+
+        # TensorBoard
+        self.writer = SummaryWriter(log_dir=str(self.logs_dir))
+
+        # CSV logger
+        self.csv_path = self.metrics_dir / "training_history.csv"
+        self.csv_initialized = False
+
+        # Save config snapshot
+        self._save_config_snapshot()
+
+    def _save_config_snapshot(self) -> None:
+        """Save all config files to the experiment directory."""
+        config_snapshot = {
+            **self.config,
+            "system_info": get_system_info(),
+            "experiment_dir": str(self.experiment_dir),
+            "timestamp": datetime.now().isoformat(),
+        }
+        with open(self.config_dir / "full_config.yaml", "w") as f:
+            yaml.dump(config_snapshot, f, default_flow_style=False, sort_keys=False)
+        logger.info("Config snapshot saved to %s", self.config_dir)
+
+    def train(self) -> dict[str, Any]:
+        """
+        Run the full training loop.
+
+        Returns
+        -------
+        dict with final metrics and best checkpoint paths.
+        """
+        logger.info("=" * 60)
+        logger.info("Starting training: %d epochs, %d train batches/epoch",
+                     self.epochs, len(self.train_loader))
+        logger.info("Effective batch size: %d (batch=%d x accum=%d)",
+                     self.train_loader.batch_size * self.grad_accum_steps,
+                     self.train_loader.batch_size, self.grad_accum_steps)
+        logger.info("=" * 60)
+
+        log_gpu_memory("training start")
+        total_t0 = time.perf_counter()
+
+        for epoch in range(self.current_epoch, self.epochs):
+            self.current_epoch = epoch
+
+            # ── Train one epoch ───────────────────────────────────
+            train_metrics = self._train_epoch()
+
+            # ── Validate ──────────────────────────────────────────
+            val_metrics = self._validate()
+
+            # ── Combine metrics ───────────────────────────────────
+            epoch_metrics = {
+                "epoch": epoch,
+                "lr": self.optimizer.param_groups[0]["lr"],
+                **{f"train_{k}": v for k, v in train_metrics.items()},
+                **{f"val_{k}": v for k, v in val_metrics.items()},
+            }
+            self.history.append(epoch_metrics)
+
+            # ── Log to TensorBoard ────────────────────────────────
+            for key, value in epoch_metrics.items():
+                if isinstance(value, (int, float)):
+                    self.writer.add_scalar(f"epoch/{key}", value, epoch)
+
+            # ── Log to CSV ────────────────────────────────────────
+            self._log_csv(epoch_metrics)
+
+            # ── Log to console ────────────────────────────────────
+            logger.info(
+                "Epoch %d/%d  |  train_loss=%.4f  val_loss=%.4f  "
+                "val_acc=%.4f  val_top5=%.4f  val_f1=%.4f  lr=%.2e",
+                epoch + 1, self.epochs,
+                epoch_metrics["train_loss"],
+                epoch_metrics["val_loss"],
+                epoch_metrics["val_accuracy"],
+                epoch_metrics.get("val_top5_accuracy", 0),
+                epoch_metrics.get("val_f1_macro", 0),
+                epoch_metrics["lr"],
+            )
+
+            # ── Checkpointing ─────────────────────────────────────
+            self._checkpoint(epoch_metrics)
+
+            # ── Early stopping ────────────────────────────────────
+            if self._check_early_stopping(epoch_metrics):
+                logger.info(
+                    "Early stopping triggered at epoch %d (patience=%d)",
+                    epoch + 1, self.patience,
+                )
+                break
+
+            log_gpu_memory(f"epoch {epoch + 1}")
+
+        total_time = time.perf_counter() - total_t0
+        logger.info("Training complete: %.1f minutes", total_time / 60)
+
+        self.writer.close()
+
+        return {
+            "best_metrics": self.best_metrics,
+            "total_epochs": self.current_epoch + 1,
+            "total_time_minutes": round(total_time / 60, 1),
+            "history": self.history,
+        }
+
+    def _train_epoch(self) -> dict[str, float]:
+        """Train for one epoch. Returns metrics dict."""
+        self.model.train()
+        total_loss = 0.0
+        correct = 0
+        total = 0
+
+        self.optimizer.zero_grad()
+
+        for batch_idx, (images, labels) in enumerate(self.train_loader):
+            images = images.to(self.device, non_blocking=True)
+            labels = labels.to(self.device, non_blocking=True)
+
+            # Forward pass with mixed precision
+            with autocast("cuda", enabled=self.use_amp):
+                logits = self.model(images)
+                loss = self.criterion(logits, labels)
+                loss = loss / self.grad_accum_steps  # Scale for accumulation
+
+            # Backward pass
+            self.scaler.scale(loss).backward()
+
+            # Accumulation step
+            if (batch_idx + 1) % self.grad_accum_steps == 0:
+                # Gradient clipping
+                if self.grad_clip_norm > 0:
+                    self.scaler.unscale_(self.optimizer)
+                    nn.utils.clip_grad_norm_(
+                        [p for p in self.model.parameters() if p.requires_grad],
+                        self.grad_clip_norm,
+                    )
+
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+                self.optimizer.zero_grad()
+                self.scheduler.step()
+                self.global_step += 1
+
+                # TensorBoard: per-step loss
+                tb_cfg = self.config.get("tensorboard", {})
+                log_every = tb_cfg.get("log_train_loss_every_n_steps", 10)
+                if self.global_step % log_every == 0:
+                    self.writer.add_scalar(
+                        "step/train_loss",
+                        loss.item() * self.grad_accum_steps,
+                        self.global_step,
+                    )
+                    self.writer.add_scalar(
+                        "step/lr",
+                        self.optimizer.param_groups[0]["lr"],
+                        self.global_step,
+                    )
+
+            # Metrics
+            total_loss += loss.item() * self.grad_accum_steps * images.size(0)
+            preds = logits.argmax(dim=1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
+
+        return {
+            "loss": total_loss / max(total, 1),
+            "accuracy": correct / max(total, 1),
+        }
+
+    @torch.no_grad()
+    def _validate(self) -> dict[str, float]:
+        """Validate on the validation set. Returns metrics dict."""
+        self.model.eval()
+        total_loss = 0.0
+        all_preds = []
+        all_labels = []
+        all_top5_correct = 0
+        total = 0
+
+        for images, labels in self.val_loader:
+            images = images.to(self.device, non_blocking=True)
+            labels = labels.to(self.device, non_blocking=True)
+
+            with autocast("cuda", enabled=self.use_amp):
+                logits = self.model(images)
+                loss = self.criterion(logits, labels)
+
+            total_loss += loss.item() * images.size(0)
+            preds = logits.argmax(dim=1)
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+            # Top-5 accuracy
+            if logits.size(1) >= 5:
+                _, top5_indices = logits.topk(5, dim=1)
+                top5_correct = (top5_indices == labels.unsqueeze(1)).any(dim=1)
+                all_top5_correct += top5_correct.sum().item()
+            total += labels.size(0)
+
+        # Compute metrics
+        all_preds = np.array(all_preds)
+        all_labels = np.array(all_labels)
+
+        accuracy = (all_preds == all_labels).mean()
+        top5_accuracy = all_top5_correct / max(total, 1)
+
+        # Per-class F1 (macro)
+        from sklearn.metrics import f1_score, precision_score, recall_score
+        f1_macro = f1_score(all_labels, all_preds, average="macro", zero_division=0)
+        f1_weighted = f1_score(all_labels, all_preds, average="weighted", zero_division=0)
+        precision_macro = precision_score(all_labels, all_preds, average="macro", zero_division=0)
+        recall_macro = recall_score(all_labels, all_preds, average="macro", zero_division=0)
+
+        return {
+            "loss": total_loss / max(total, 1),
+            "accuracy": float(accuracy),
+            "top5_accuracy": float(top5_accuracy),
+            "f1_macro": float(f1_macro),
+            "f1_weighted": float(f1_weighted),
+            "precision_macro": float(precision_macro),
+            "recall_macro": float(recall_macro),
+        }
+
+    def _checkpoint(self, epoch_metrics: dict[str, Any]) -> None:
+        """Save checkpoints based on metric improvements."""
+        epoch = epoch_metrics["epoch"]
+        ckpt_cfg = self.config.get("checkpointing", {})
+        experiment_name = self.config.get("experiment", {}).get("base_name", "bioclip2")
+
+        # Always save last checkpoint
+        if ckpt_cfg.get("save_last", True):
+            self._save_checkpoint(
+                f"{experiment_name}_last",
+                epoch_metrics,
+                save_optimizer=True,
+            )
+
+        # Save best accuracy
+        val_acc = epoch_metrics.get("val_accuracy", 0)
+        if ckpt_cfg.get("save_best_accuracy", True):
+            if val_acc > self.best_metrics.get("val_accuracy", 0) + self.min_delta:
+                self.best_metrics["val_accuracy"] = val_acc
+                name = f"{experiment_name}_best_acc_{val_acc:.4f}_epoch{epoch}"
+                self._save_checkpoint(name, epoch_metrics)
+                logger.info("  New best accuracy: %.4f", val_acc)
+
+        # Save best F1
+        val_f1 = epoch_metrics.get("val_f1_macro", 0)
+        if ckpt_cfg.get("save_best_f1", True):
+            if val_f1 > self.best_metrics.get("val_f1_macro", 0) + self.min_delta:
+                self.best_metrics["val_f1_macro"] = val_f1
+                name = f"{experiment_name}_best_f1_{val_f1:.4f}_epoch{epoch}"
+                self._save_checkpoint(name, epoch_metrics)
+                logger.info("  New best F1 (macro): %.4f", val_f1)
+
+    def _save_checkpoint(
+        self,
+        name: str,
+        metrics: dict[str, Any],
+        save_optimizer: bool = False,
+    ) -> None:
+        """Save a checkpoint with descriptive name."""
+        ckpt_dir = self.checkpoint_dir / name
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save LoRA adapter (if applicable)
+        try:
+            self.model.backbone.visual.save_pretrained(str(ckpt_dir / "lora_adapter"))
+        except AttributeError:
+            # No LoRA applied — save full backbone state
+            torch.save(
+                self.model.backbone.state_dict(),
+                ckpt_dir / "backbone.pt",
+            )
+
+        # Save classifier head
+        torch.save(
+            self.model.classifier.state_dict(),
+            ckpt_dir / "classifier_head.pt",
+        )
+
+        # Save optimizer state (for resume)
+        if save_optimizer:
+            torch.save({
+                "optimizer": self.optimizer.state_dict(),
+                "scheduler": self.scheduler.state_dict(),
+                "scaler": self.scaler.state_dict(),
+                "epoch": metrics["epoch"],
+                "global_step": self.global_step,
+                "best_metrics": self.best_metrics,
+                "patience_counter": self.patience_counter,
+            }, ckpt_dir / "training_state.pt")
+
+        # Save metadata
+        metadata = {
+            "name": name,
+            "timestamp": datetime.now().isoformat(),
+            "metrics": {k: v for k, v in metrics.items() if isinstance(v, (int, float))},
+            "class_names": self.class_names,
+            "num_classes": len(self.class_names),
+        }
+        with open(ckpt_dir / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
+    def resume_from(self, checkpoint_dir: str | Path) -> None:
+        """
+        Resume training from a checkpoint.
+
+        Parameters
+        ----------
+        checkpoint_dir : Path
+            Path to a checkpoint directory containing training_state.pt,
+            lora_adapter/ or backbone.pt, and classifier_head.pt.
+        """
+        checkpoint_dir = Path(checkpoint_dir)
+        logger.info("Resuming from: %s", checkpoint_dir)
+
+        # Load classifier head
+        head_path = checkpoint_dir / "classifier_head.pt"
+        if head_path.exists():
+            self.model.classifier.load_state_dict(torch.load(head_path, weights_only=True))
+            logger.info("  Loaded classifier head")
+
+        # Load LoRA adapter
+        lora_path = checkpoint_dir / "lora_adapter"
+        backbone_path = checkpoint_dir / "backbone.pt"
+        if lora_path.exists():
+            from peft import PeftModel
+            self.model.backbone.visual = PeftModel.from_pretrained(
+                self.model.backbone.visual, str(lora_path)
+            )
+            logger.info("  Loaded LoRA adapter")
+        elif backbone_path.exists():
+            self.model.backbone.load_state_dict(
+                torch.load(backbone_path, weights_only=True)
+            )
+            logger.info("  Loaded backbone weights")
+
+        # Load training state
+        state_path = checkpoint_dir / "training_state.pt"
+        if state_path.exists():
+            state = torch.load(state_path, weights_only=True)
+            self.optimizer.load_state_dict(state["optimizer"])
+            self.scheduler.load_state_dict(state["scheduler"])
+            self.scaler.load_state_dict(state["scaler"])
+            self.current_epoch = state["epoch"] + 1
+            self.global_step = state["global_step"]
+            self.best_metrics = state["best_metrics"]
+            self.patience_counter = state["patience_counter"]
+            logger.info("  Resumed at epoch %d, step %d",
+                         self.current_epoch, self.global_step)
+
+    def _check_early_stopping(self, epoch_metrics: dict[str, Any]) -> bool:
+        """Check early stopping condition."""
+        if not self.early_stopping_enabled:
+            return False
+
+        current_value = epoch_metrics.get(self.monitor_metric, 0)
+        best_value = self.best_metrics.get(self.monitor_metric, 0)
+
+        if current_value > best_value + self.min_delta:
+            self.patience_counter = 0
+        else:
+            self.patience_counter += 1
+
+        return self.patience_counter >= self.patience
+
+    def _log_csv(self, metrics: dict[str, Any]) -> None:
+        """Append epoch metrics to CSV file."""
+        numeric_metrics = {
+            k: round(v, 6) if isinstance(v, float) else v
+            for k, v in metrics.items()
+            if isinstance(v, (int, float))
+        }
+
+        if not self.csv_initialized:
+            with open(self.csv_path, "w", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=list(numeric_metrics.keys()))
+                writer.writeheader()
+                writer.writerow(numeric_metrics)
+            self.csv_initialized = True
+        else:
+            with open(self.csv_path, "a", newline="") as f:
+                writer = csv.DictWriter(f, fieldnames=list(numeric_metrics.keys()))
+                writer.writerow(numeric_metrics)
+
+
+def create_experiment_dir(
+    base_dir: str | Path = "experiments",
+    base_name: str = "bioclip2_lora",
+) -> Path:
+    """
+    Create a timestamped experiment directory.
+
+    Returns
+    -------
+    Path to the created experiment directory.
+    Example: experiments/bioclip2_lora_20260704_185000/
+    """
+    base_dir = Path(base_dir)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    experiment_dir = base_dir / f"{base_name}_{timestamp}"
+    experiment_dir.mkdir(parents=True, exist_ok=True)
+    logger.info("Experiment directory: %s", experiment_dir)
+    return experiment_dir
