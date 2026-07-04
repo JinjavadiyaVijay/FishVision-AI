@@ -1,0 +1,1 @@
+"""FishVision-AI classification package."""
