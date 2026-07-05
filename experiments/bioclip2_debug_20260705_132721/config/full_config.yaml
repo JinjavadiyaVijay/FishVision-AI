@@ -15,7 +15,7 @@ training:
   epochs: 1
   batch_size: 8
   gradient_accumulation_steps: 4
-  num_workers: 0
+  num_workers: 2
   seed: 42
   deterministic: true
 optimizer:
@@ -162,5 +162,5 @@ system_info:
   cuda_version: '12.8'
   gpu_name: NVIDIA GeForce RTX 3050 6GB Laptop GPU
   gpu_memory_gb: '6.4'
-experiment_dir: C:\fish_detection\experiments\smoke_test_20260705_115350
-timestamp: '2026-07-05T11:54:07.261590'
+experiment_dir: C:\fish_detection\experiments\bioclip2_debug_20260705_132721
+timestamp: '2026-07-05T13:27:36.160594'

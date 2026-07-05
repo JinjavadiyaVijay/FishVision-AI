@@ -13,6 +13,7 @@ from __future__ import annotations
 import csv
 import json
 import logging
+import math
 import shutil
 import time
 from collections import defaultdict
@@ -29,6 +30,7 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 from classification.models.classifier import SpeciesClassifier
 from classification.utilities.device import log_gpu_memory, get_system_info
@@ -70,6 +72,7 @@ class TrainingEngine:
         class_names: list[str],
         device: torch.device,
         class_weights: Optional[torch.Tensor] = None,
+        max_steps: Optional[int] = None,
     ) -> None:
         self.model = model.to(device)
         self.train_loader = train_loader
@@ -94,6 +97,13 @@ class TrainingEngine:
         train_cfg = config.get("training", {})
         self.epochs = train_cfg.get("epochs", 30)
         self.grad_accum_steps = train_cfg.get("gradient_accumulation_steps", 4)
+
+        # Max steps (for smoke test / debug mode)
+        self.max_steps = max_steps
+
+        # Batch timing
+        self.batch_times: list[float] = []
+        self.data_times: list[float] = []
 
         # Precision
         prec_cfg = config.get("precision", {})
@@ -271,25 +281,52 @@ class TrainingEngine:
         total_time = time.perf_counter() - total_t0
         logger.info("Training complete: %.1f minutes", total_time / 60)
 
+        # Throughput report (Task 4 — profiling)
+        throughput = self.log_throughput_report()
+
         self.writer.close()
 
         return {
             "best_metrics": self.best_metrics,
             "total_epochs": self.current_epoch + 1,
             "total_time_minutes": round(total_time / 60, 1),
+            "throughput": throughput,
             "history": self.history,
         }
 
     def _train_epoch(self) -> dict[str, float]:
-        """Train for one epoch. Returns metrics dict."""
+        """Train for one epoch with tqdm progress. Returns metrics dict."""
         self.model.train()
         total_loss = 0.0
         correct = 0
         total = 0
+        running_loss = 0.0  # For smoothed display
 
         self.optimizer.zero_grad()
 
-        for batch_idx, (images, labels) in enumerate(self.train_loader):
+        # Determine total batches (may be limited by max_steps)
+        total_batches = len(self.train_loader)
+        if self.max_steps is not None:
+            total_batches = min(total_batches, self.max_steps)
+
+        pbar = tqdm(
+            enumerate(self.train_loader),
+            total=total_batches,
+            desc=f"Epoch {self.current_epoch + 1}/{self.epochs}",
+            unit="batch",
+            leave=True,
+            bar_format="{l_bar}{bar:20}{r_bar}",
+        )
+
+        data_start = time.perf_counter()
+
+        for batch_idx, (images, labels) in pbar:
+            # Data loading time
+            data_time = time.perf_counter() - data_start
+            self.data_times.append(data_time)
+
+            batch_start = time.perf_counter()
+
             images = images.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
 
@@ -297,14 +334,13 @@ class TrainingEngine:
             with autocast("cuda", enabled=self.use_amp):
                 logits = self.model(images)
                 loss = self.criterion(logits, labels)
-                loss = loss / self.grad_accum_steps  # Scale for accumulation
+                loss = loss / self.grad_accum_steps
 
             # Backward pass
             self.scaler.scale(loss).backward()
 
             # Accumulation step
             if (batch_idx + 1) % self.grad_accum_steps == 0:
-                # Gradient clipping
                 if self.grad_clip_norm > 0:
                     self.scaler.unscale_(self.optimizer)
                     nn.utils.clip_grad_norm_(
@@ -334,10 +370,38 @@ class TrainingEngine:
                     )
 
             # Metrics
-            total_loss += loss.item() * self.grad_accum_steps * images.size(0)
+            batch_loss = loss.item() * self.grad_accum_steps
+            total_loss += batch_loss * images.size(0)
             preds = logits.argmax(dim=1)
             correct += (preds == labels).sum().item()
             total += labels.size(0)
+
+            # Batch timing
+            batch_time = time.perf_counter() - batch_start
+            self.batch_times.append(batch_time)
+
+            # Smoothed running loss for display
+            running_loss = 0.9 * running_loss + 0.1 * batch_loss if running_loss > 0 else batch_loss
+
+            # Update progress bar
+            gpu_mem = ""
+            if torch.cuda.is_available():
+                gpu_gb = torch.cuda.memory_allocated(0) / 1e9
+                gpu_mem = f"GPU:{gpu_gb:.1f}GB"
+
+            lr = self.optimizer.param_groups[0]["lr"]
+            pbar.set_postfix_str(
+                f"loss={running_loss:.3f} lr={lr:.1e} {gpu_mem}",
+                refresh=False,
+            )
+
+            # Max steps early exit (for smoke test / debug mode)
+            if self.max_steps is not None and (batch_idx + 1) >= self.max_steps:
+                break
+
+            data_start = time.perf_counter()
+
+        pbar.close()
 
         return {
             "loss": total_loss / max(total, 1),
@@ -346,7 +410,7 @@ class TrainingEngine:
 
     @torch.no_grad()
     def _validate(self) -> dict[str, float]:
-        """Validate on the validation set. Returns metrics dict."""
+        """Validate on the validation set with tqdm progress. Returns metrics dict."""
         self.model.eval()
         total_loss = 0.0
         all_preds = []
@@ -354,7 +418,21 @@ class TrainingEngine:
         all_top5_correct = 0
         total = 0
 
-        for images, labels in self.val_loader:
+        # Limit validation batches proportionally in smoke/debug mode
+        val_batches = len(self.val_loader)
+        if self.max_steps is not None:
+            val_batches = min(val_batches, max(self.max_steps // 2, 10))
+
+        pbar = tqdm(
+            enumerate(self.val_loader),
+            total=val_batches,
+            desc="  Validating",
+            unit="batch",
+            leave=False,
+            bar_format="{l_bar}{bar:20}{r_bar}",
+        )
+
+        for batch_idx, (images, labels) in pbar:
             images = images.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
 
@@ -373,6 +451,11 @@ class TrainingEngine:
                 top5_correct = (top5_indices == labels.unsqueeze(1)).any(dim=1)
                 all_top5_correct += top5_correct.sum().item()
             total += labels.size(0)
+
+            if self.max_steps is not None and (batch_idx + 1) >= val_batches:
+                break
+
+        pbar.close()
 
         # Compute metrics
         all_preds = np.array(all_preds)
@@ -397,6 +480,61 @@ class TrainingEngine:
             "precision_macro": float(precision_macro),
             "recall_macro": float(recall_macro),
         }
+
+    def log_throughput_report(self) -> dict[str, float]:
+        """Log profiling data: batch times, data loading times, throughput.
+        
+        Call this after at least one epoch to get meaningful data.
+        """
+        report = {}
+        batch_size = self.train_loader.batch_size or 8
+
+        if self.batch_times:
+            avg_batch = sum(self.batch_times) / len(self.batch_times)
+            avg_data = sum(self.data_times) / len(self.data_times) if self.data_times else 0
+            avg_compute = avg_batch  # batch_time = GPU forward+backward time
+            imgs_per_sec = batch_size / (avg_batch + avg_data) if (avg_batch + avg_data) > 0 else 0
+            data_pct = 100 * avg_data / (avg_batch + avg_data) if (avg_batch + avg_data) > 0 else 0
+
+            report = {
+                "avg_batch_time_ms": round(avg_batch * 1000, 1),
+                "avg_data_time_ms": round(avg_data * 1000, 1),
+                "avg_compute_time_ms": round(avg_compute * 1000, 1),
+                "images_per_sec": round(imgs_per_sec, 1),
+                "data_loading_pct": round(data_pct, 1),
+                "total_batches_profiled": len(self.batch_times),
+            }
+
+            logger.info("=" * 60)
+            logger.info("THROUGHPUT REPORT")
+            logger.info("-" * 60)
+            logger.info("  Avg batch (GPU compute): %6.1f ms", report["avg_compute_time_ms"])
+            logger.info("  Avg data loading:        %6.1f ms", report["avg_data_time_ms"])
+            logger.info("  Images/sec:              %6.1f", report["images_per_sec"])
+            logger.info("  Data loading overhead:   %5.1f%%", report["data_loading_pct"])
+            logger.info("  Batches profiled:        %6d", report["total_batches_profiled"])
+
+            # Bottleneck analysis
+            if data_pct > 50:
+                logger.warning("  BOTTLENECK: Data loading (%.0f%%). "
+                             "Increase num_workers or enable pin_memory.", data_pct)
+            elif data_pct > 30:
+                logger.info("  Data loading is significant (%.0f%%). "
+                          "Consider increasing num_workers.", data_pct)
+            else:
+                logger.info("  Pipeline is GPU-bound. Data loading is efficient.")
+
+            # GPU memory summary
+            if torch.cuda.is_available():
+                alloc = torch.cuda.memory_allocated(0) / 1e9
+                reserved = torch.cuda.memory_reserved(0) / 1e9
+                total_mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+                logger.info("  GPU memory: %.2f GB allocated, %.2f GB reserved, %.1f GB total",
+                          alloc, reserved, total_mem)
+
+            logger.info("=" * 60)
+
+        return report
 
     def _checkpoint(self, epoch_metrics: dict[str, Any]) -> None:
         """Save checkpoints based on metric improvements."""

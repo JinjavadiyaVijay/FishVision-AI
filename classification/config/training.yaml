@@ -6,6 +6,11 @@ training:
   epochs: 30
   batch_size: 8
   gradient_accumulation_steps: 4
+  # DataLoader workers: 2 is optimal for Windows + RTX 3050 Laptop.
+  # Windows spawns full processes (not fork), so >4 workers causes
+  # handle exhaustion and memory pressure. 2 workers with
+  # prefetch_factor=2 and pin_memory=True hides I/O latency well.
+  # Set to 0 only for debugging multiprocessing issues.
   num_workers: 2
   seed: 42
   deterministic: true

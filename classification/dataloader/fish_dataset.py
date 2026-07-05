@@ -306,16 +306,21 @@ class FishDatasetBuilder:
             sampler = self.build_weighted_sampler(split_name)
             shuffle = False  # Sampler handles ordering
 
-        return DataLoader(
-            dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            sampler=sampler,
-            num_workers=num_workers,
-            pin_memory=torch.cuda.is_available(),
-            drop_last=(split_name == "train"),
-            persistent_workers=(num_workers > 0),
-        )
+        loader_kwargs = {
+            "batch_size": batch_size,
+            "shuffle": shuffle,
+            "sampler": sampler,
+            "num_workers": num_workers,
+            "pin_memory": torch.cuda.is_available(),
+            "drop_last": (split_name == "train"),
+        }
+
+        # Workers-dependent optimizations
+        if num_workers > 0:
+            loader_kwargs["persistent_workers"] = True
+            loader_kwargs["prefetch_factor"] = 2
+
+        return DataLoader(dataset, **loader_kwargs)
 
     def get_split_summary(self) -> dict[str, Any]:
         """Return a summary dict of all splits for logging."""

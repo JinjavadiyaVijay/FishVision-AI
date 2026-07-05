@@ -2,23 +2,29 @@
 train_bioclip.py — Main training script for BioCLIP 2 species classifier.
 
 Usage:
-    python scripts/train_bioclip.py
-    python scripts/train_bioclip.py --epochs 10 --batch-size 4
-    python scripts/train_bioclip.py --resume experiments/bioclip2_lora_20260704/checkpoints/bioclip2_last
-    python scripts/train_bioclip.py --mode linear_probe
-    python scripts/train_bioclip.py --mode full_finetune
+    python scripts/train_bioclip.py --smoke-test
+    python scripts/train_bioclip.py --debug
+    python scripts/train_bioclip.py --mode lora --epochs 30
+    python scripts/train_bioclip.py --resume experiments/.../checkpoints/bioclip2_last
 
-Modes:
-    lora           — LoRA fine-tuning (default, recommended for RTX 3050)
-    linear_probe   — Frozen backbone + trainable classifier head only
-    full_finetune  — All parameters trainable (requires >6GB VRAM)
+Training Modes:
+    --smoke-test     — 30 batches, 1 epoch, validates full pipeline in <2 min
+    --debug          — 500 batches, 1 epoch, quick dataset/model verification
+    (default)        — Full training with all epochs
+
+Model Modes:
+    lora             — LoRA fine-tuning (default, recommended for RTX 3050)
+    linear_probe     — Frozen backbone + trainable classifier head only
+    full_finetune    — All parameters trainable (requires >6GB VRAM)
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
+import time
 from pathlib import Path
 
 import torch
@@ -66,17 +72,77 @@ def apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
     return config
 
 
+def validate_dataset(builder: FishDatasetBuilder) -> bool:
+    """
+    Pre-training dataset validation (Task 10).
+
+    Checks class counts, empty folders, and split consistency.
+    Returns True if validation passes, False otherwise.
+    """
+    logger.info("=" * 60)
+    logger.info("DATASET VALIDATION")
+    logger.info("-" * 60)
+
+    issues = []
+    summary = builder.get_split_summary()
+
+    # Check class count
+    num_classes = summary["num_classes"]
+    if num_classes == 0:
+        issues.append("FATAL: No classes found in dataset")
+    else:
+        logger.info("  Classes: %d", num_classes)
+
+    # Check each split
+    for split_name in ("train", "val", "test"):
+        if split_name not in summary:
+            issues.append(f"FATAL: Missing '{split_name}' split")
+            continue
+
+        split_info = summary[split_name]
+        logger.info("  %s: %d images, %d classes, min=%d/class, max=%d/class",
+                     split_name, split_info["total_images"],
+                     split_info["classes_with_images"],
+                     split_info["min_per_class"],
+                     split_info["max_per_class"])
+
+        if split_info["total_images"] == 0:
+            issues.append(f"FATAL: '{split_name}' split has 0 images")
+        if split_info["classes_with_images"] != num_classes:
+            issues.append(
+                f"WARNING: '{split_name}' has {split_info['classes_with_images']}"
+                f" classes, expected {num_classes}"
+            )
+        if split_info["min_per_class"] == 0:
+            issues.append(f"WARNING: '{split_name}' has classes with 0 images")
+
+    # Report
+    if issues:
+        for issue in issues:
+            if issue.startswith("FATAL"):
+                logger.error("  %s", issue)
+            else:
+                logger.warning("  %s", issue)
+
+    fatal = any(i.startswith("FATAL") for i in issues)
+    if fatal:
+        logger.error("DATASET VALIDATION FAILED — cannot proceed")
+    else:
+        logger.info("  DATASET VALIDATION PASSED")
+    logger.info("=" * 60)
+
+    return not fatal
+
+
 def setup_model(config: dict, num_classes: int, mode: str, device: torch.device):
     """
     Build backbone + classifier with the specified training mode.
 
     Returns (model, experiment_base_name)
     """
-    # Load backbone
     backbone = create_backbone(config)
     log_gpu_memory("after backbone load")
 
-    # Classifier head
     cls_cfg = config.get("classifier", {})
     classifier = ClassifierHead(
         embed_dim=backbone.embed_dim,
@@ -86,13 +152,11 @@ def setup_model(config: dict, num_classes: int, mode: str, device: torch.device)
     )
 
     if mode == "linear_probe":
-        # Freeze backbone entirely
         backbone.freeze()
         base_name = "bioclip2_linear_probe"
         logger.info("Mode: LINEAR PROBE (backbone frozen)")
 
     elif mode == "lora":
-        # Freeze backbone, then apply LoRA
         backbone.freeze()
         lora_cfg = config.get("lora", {})
         target_modules = backbone.get_lora_target_modules()
@@ -111,7 +175,6 @@ def setup_model(config: dict, num_classes: int, mode: str, device: torch.device)
                      lora_cfg.get("rank", 16), lora_cfg.get("alpha", 32))
 
     elif mode == "full_finetune":
-        # All parameters trainable
         backbone.unfreeze()
         base_name = "bioclip2_full_ft"
         logger.info("Mode: FULL FINE-TUNE (all parameters trainable)")
@@ -122,7 +185,6 @@ def setup_model(config: dict, num_classes: int, mode: str, device: torch.device)
 
     model = SpeciesClassifier(backbone=backbone, classifier=classifier)
 
-    # Log parameter summary
     summary = model.get_param_summary()
     logger.info("Model: %d total params, %d trainable (%.2f%%)",
                  summary["total_params"], summary["total_trainable"],
@@ -149,6 +211,16 @@ def main() -> None:
                         help="Override experiment base name")
     parser.add_argument("--no-weighted-sampler", action="store_true",
                         help="Disable weighted random sampling")
+
+    # Training run modes (Task 1 + Task 9)
+    run_mode = parser.add_mutually_exclusive_group()
+    run_mode.add_argument("--smoke-test", action="store_true",
+                          help="Quick pipeline validation: 30 batches, 1 epoch, <2 min")
+    run_mode.add_argument("--debug", action="store_true",
+                          help="Debug training: 500 batches, 1 epoch")
+    run_mode.add_argument("--max-steps", type=int, default=None,
+                          help="Custom max batches per epoch")
+
     args = parser.parse_args()
 
     # ── Setup logging ─────────────────────────────────────────
@@ -157,6 +229,28 @@ def main() -> None:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%H:%M:%S",
     )
+
+    # ── Determine run mode and max_steps ──────────────────────
+    max_steps = args.max_steps
+    run_mode_name = "full"
+
+    if args.smoke_test:
+        max_steps = 30
+        run_mode_name = "smoke_test"
+        if args.epochs is None:
+            args.epochs = 1
+        logger.info("=" * 60)
+        logger.info("SMOKE TEST MODE — 30 batches, 1 epoch")
+        logger.info("=" * 60)
+
+    elif args.debug:
+        max_steps = 500
+        run_mode_name = "debug"
+        if args.epochs is None:
+            args.epochs = 1
+        logger.info("=" * 60)
+        logger.info("DEBUG MODE — 500 batches, 1 epoch")
+        logger.info("=" * 60)
 
     # ── Load config ───────────────────────────────────────────
     config = load_configs()
@@ -180,8 +274,13 @@ def main() -> None:
         exclude_species=exclude_species,
     )
 
-    # Save class mapping
-    experiment_base_name = args.experiment_name or "bioclip2"
+    # ── Dataset validation (Task 10) ──────────────────────────
+    if not validate_dataset(builder):
+        logger.error("Aborting due to dataset validation failure.")
+        sys.exit(1)
+
+    # ── Experiment directory ──────────────────────────────────
+    experiment_base_name = args.experiment_name or f"bioclip2_{run_mode_name}"
     experiment_dir = create_experiment_dir(
         base_dir=PROJECT_ROOT / config.get("experiment", {}).get("base_dir", "experiments"),
         base_name=experiment_base_name,
@@ -189,30 +288,35 @@ def main() -> None:
     builder.save_class_mapping(experiment_dir / "config" / "class_mapping.json")
 
     # Save split summary
-    import json
     summary = builder.get_split_summary()
+    (experiment_dir / "config").mkdir(parents=True, exist_ok=True)
     with open(experiment_dir / "config" / "dataset_summary.json", "w") as f:
         json.dump(summary, f, indent=2, default=str)
 
     # ── Model ─────────────────────────────────────────────────
     model, mode_name = setup_model(config, builder.num_classes, args.mode, device)
 
-    # Update experiment name with mode
-    if args.experiment_name is None:
-        # Rename experiment dir with the mode-specific name
-        new_dir = experiment_dir.parent / f"{mode_name}_{experiment_dir.name.split('_', 2)[-1]}"
-        if not new_dir.exists():
-            experiment_dir.rename(new_dir)
-            experiment_dir = new_dir
-
     # ── Transforms ────────────────────────────────────────────
     train_tf = model.backbone.get_transforms(train=True)
     val_tf = model.backbone.get_transforms(train=False)
 
-    # ── DataLoaders ───────────────────────────────────────────
+    # ── DataLoaders (Task 3 — optimized settings) ─────────────
     batch_size = train_cfg.get("batch_size", 8)
     num_workers = train_cfg.get("num_workers", 2)
     use_weighted = not args.no_weighted_sampler
+
+    # Windows DataLoader constraints:
+    # - persistent_workers requires num_workers > 0
+    # - prefetch_factor requires num_workers > 0
+    # - Too many workers on Windows causes handle exhaustion
+    # Optimal for RTX 3050 Laptop + NVMe/SSD: 2-4 workers
+    use_persistent = num_workers > 0
+    use_prefetch = num_workers > 0
+
+    logger.info("DataLoader: batch_size=%d, workers=%d, pin_memory=True, "
+                "persistent_workers=%s, prefetch_factor=%s",
+                batch_size, num_workers, use_persistent,
+                2 if use_prefetch else "N/A")
 
     train_loader = builder.build_dataloader(
         "train", transform=train_tf, batch_size=batch_size,
@@ -226,6 +330,9 @@ def main() -> None:
     logger.info("Train: %d batches (batch_size=%d)", len(train_loader), batch_size)
     logger.info("Val:   %d batches (batch_size=%d)", len(val_loader), batch_size * 2)
 
+    if max_steps:
+        logger.info("Max steps per epoch: %d (of %d total)", max_steps, len(train_loader))
+
     # ── Training engine ───────────────────────────────────────
     engine = TrainingEngine(
         model=model,
@@ -236,6 +343,7 @@ def main() -> None:
         class_names=builder.class_names,
         device=device,
         class_weights=builder.class_weights if use_weighted else None,
+        max_steps=max_steps,
     )
 
     # Resume if requested
@@ -243,18 +351,33 @@ def main() -> None:
         engine.resume_from(args.resume)
 
     # ── Train ─────────────────────────────────────────────────
+    t0 = time.perf_counter()
     results = engine.train()
+    elapsed = time.perf_counter() - t0
 
     # ── Final summary ─────────────────────────────────────────
     logger.info("=" * 60)
     logger.info("TRAINING COMPLETE")
-    logger.info("  Experiment: %s", experiment_dir.name)
-    logger.info("  Epochs: %d", results["total_epochs"])
-    logger.info("  Time: %.1f minutes", results["total_time_minutes"])
+    logger.info("  Run mode:     %s", run_mode_name)
+    logger.info("  Experiment:   %s", experiment_dir.name)
+    logger.info("  Epochs:       %d", results["total_epochs"])
+    logger.info("  Wall time:    %.1f seconds (%.1f min)", elapsed, elapsed / 60)
     logger.info("  Best accuracy: %.4f", results["best_metrics"].get("val_accuracy", 0))
     logger.info("  Best F1 macro: %.4f", results["best_metrics"].get("val_f1_macro", 0))
-    logger.info("  Checkpoints: %s", engine.checkpoint_dir)
+    logger.info("  Checkpoints:  %s", engine.checkpoint_dir)
+
+    if "throughput" in results and results["throughput"]:
+        tp = results["throughput"]
+        logger.info("  Throughput:   %.1f img/sec", tp.get("images_per_sec", 0))
+        logger.info("  Data loading: %.1f%% of time", tp.get("data_loading_pct", 0))
+
     logger.info("=" * 60)
+
+    if args.smoke_test:
+        if elapsed < 120:
+            logger.info("SMOKE TEST PASSED (%.1fs < 2min target)", elapsed)
+        else:
+            logger.warning("SMOKE TEST SLOW (%.1fs > 2min target)", elapsed)
 
 
 if __name__ == "__main__":
