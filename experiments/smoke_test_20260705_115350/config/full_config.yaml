@@ -162,5 +162,5 @@ system_info:
   cuda_version: '12.8'
   gpu_name: NVIDIA GeForce RTX 3050 6GB Laptop GPU
   gpu_memory_gb: '6.4'
-experiment_dir: C:\fish_detection\experiments\smoke_test_20260704_190417
-timestamp: '2026-07-04T23:05:50.418226'
+experiment_dir: C:\fish_detection\experiments\smoke_test_20260705_115350
+timestamp: '2026-07-05T11:54:07.261590'
