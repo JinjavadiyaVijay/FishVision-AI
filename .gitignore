@@ -50,3 +50,6 @@ datasets/exports/
 checkpoints/
 runs/
 outputs/
+
+# Experiment outputs
+experiments/

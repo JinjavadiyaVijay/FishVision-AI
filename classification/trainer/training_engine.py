@@ -626,7 +626,11 @@ class TrainingEngine:
         # Save best accuracy
         val_acc = epoch_metrics.get("val_accuracy", 0)
         if ckpt_cfg.get("save_best_accuracy", True):
-            if val_acc > self.best_metrics.get("val_accuracy", 0) + self.min_delta:
+            best_accuracy_path = self.checkpoint_dir / "best_accuracy.pt"
+            if (
+                not best_accuracy_path.exists()
+                or val_acc > self.best_metrics.get("val_accuracy", 0) + self.min_delta
+            ):
                 self.best_metrics["val_accuracy"] = val_acc
                 self._save_checkpoint("best_accuracy.pt", epoch_metrics)
                 logger.info("  New best accuracy: %.4f", val_acc)
@@ -634,7 +638,11 @@ class TrainingEngine:
         # Save best F1
         val_f1 = epoch_metrics.get("val_f1_macro", 0)
         if ckpt_cfg.get("save_best_f1", True):
-            if val_f1 > self.best_metrics.get("val_f1_macro", 0) + self.min_delta:
+            best_f1_path = self.checkpoint_dir / "best_f1.pt"
+            if (
+                not best_f1_path.exists()
+                or val_f1 > self.best_metrics.get("val_f1_macro", 0) + self.min_delta
+            ):
                 self.best_metrics["val_f1_macro"] = val_f1
                 self._save_checkpoint("best_f1.pt", epoch_metrics)
                 logger.info("  New best F1 (macro): %.4f", val_f1)
