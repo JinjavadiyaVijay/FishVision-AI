@@ -23,12 +23,14 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import random
 import sys
 import time
 from pathlib import Path
 
 import torch
 import yaml
+from PIL import Image
 
 # ── Path bootstrap ─────────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -72,11 +74,43 @@ def apply_cli_overrides(config: dict, args: argparse.Namespace) -> dict:
     return config
 
 
-def validate_dataset(builder: FishDatasetBuilder) -> bool:
+def log_reproducibility_state(seed: int, deterministic: bool) -> None:
+    """Log deterministic settings that affect experiment reproducibility."""
+    logger.info(
+        "Reproducibility: seed=%d deterministic=%s cudnn.deterministic=%s cudnn.benchmark=%s",
+        seed,
+        deterministic,
+        torch.backends.cudnn.deterministic,
+        torch.backends.cudnn.benchmark,
+    )
+
+
+def recommend_batch_size(mode: str, current_batch_size: int) -> int:
+    """Return a conservative batch-size recommendation for the active GPU."""
+    if not torch.cuda.is_available():
+        logger.info("Batch-size recommendation: CPU mode, keep batch_size=%d", current_batch_size)
+        return current_batch_size
+
+    total_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
+    if mode == "full_finetune":
+        recommended = 2 if total_gb <= 6.5 else 4
+    elif mode == "lora":
+        recommended = 8 if total_gb <= 6.5 else 16
+    else:
+        recommended = 8 if total_gb <= 6.5 else 16
+
+    logger.info(
+        "Batch-size recommendation: current=%d recommended=%d for mode=%s on %.1fGB VRAM",
+        current_batch_size, recommended, mode, total_gb,
+    )
+    return recommended
+
+
+def validate_dataset(builder: FishDatasetBuilder, config: dict) -> bool:
     """
     Pre-training dataset validation (Task 10).
 
-    Checks class counts, empty folders, and split consistency.
+    Checks class counts, split consistency, mapping consistency, and optional image readability.
     Returns True if validation passes, False otherwise.
     """
     logger.info("=" * 60)
@@ -85,6 +119,8 @@ def validate_dataset(builder: FishDatasetBuilder) -> bool:
 
     issues = []
     summary = builder.get_split_summary()
+    data_cfg = config.get("dataset", {})
+    val_cfg = config.get("validation", {})
 
     # Check class count
     num_classes = summary["num_classes"]
@@ -115,6 +151,56 @@ def validate_dataset(builder: FishDatasetBuilder) -> bool:
             )
         if split_info["min_per_class"] == 0:
             issues.append(f"WARNING: '{split_name}' has classes with 0 images")
+
+    # Check class mapping against master catalog when present.
+    catalog_path = PROJECT_ROOT / data_cfg.get("master_catalog", "datasets/metadata/master_species_catalog.json")
+    if catalog_path.exists():
+        with open(catalog_path) as f:
+            catalog = json.load(f)
+        if isinstance(catalog, dict):
+            catalog_names = set(catalog.keys())
+        else:
+            catalog_names = {
+                item.get("scientific_name") or item.get("species") or item.get("class_name") or item.get("name")
+                for item in catalog
+                if isinstance(item, dict)
+            }
+        catalog_names.discard(None)
+        normalized_catalog = {str(name).replace(" ", "_") for name in catalog_names}
+        missing_from_catalog = sorted(set(builder.class_names) - normalized_catalog)
+        if missing_from_catalog:
+            issues.append(
+                f"FATAL: {len(missing_from_catalog)} training classes missing from master catalog"
+            )
+        else:
+            logger.info("  Class mapping: consistent with %s", catalog_path)
+    else:
+        issues.append(f"WARNING: Master catalog not found: {catalog_path}")
+
+    # Optional readability check. Defaults to config values so normal startup stays fast.
+    check_readability = bool(val_cfg.get("check_readability", False))
+    sample_frac = float(val_cfg.get("readability_sample_frac", 0.05))
+    if check_readability:
+        rng = random.Random(config.get("training", {}).get("seed", 42))
+        all_paths = []
+        for paths, _labels in builder._split_data.values():
+            all_paths.extend(paths)
+        sample_size = len(all_paths) if sample_frac >= 1.0 else max(1, int(len(all_paths) * sample_frac))
+        sample_paths = rng.sample(all_paths, min(sample_size, len(all_paths)))
+        logger.info("  Readability: checking %d/%d images", len(sample_paths), len(all_paths))
+        corrupted = []
+        for image_path in sample_paths:
+            try:
+                with Image.open(image_path) as img:
+                    img.verify()
+            except Exception as exc:
+                corrupted.append((str(image_path), str(exc)))
+                if len(corrupted) >= 10:
+                    break
+        if corrupted:
+            issues.append(f"FATAL: Found unreadable/corrupted images, first={corrupted[0][0]}")
+    else:
+        logger.info("  Readability: skipped (validation.check_readability=false)")
 
     # Report
     if issues:
@@ -258,7 +344,9 @@ def main() -> None:
 
     train_cfg = config.get("training", {})
     seed = train_cfg.get("seed", 42)
-    set_seed(seed, deterministic=train_cfg.get("deterministic", True))
+    deterministic = train_cfg.get("deterministic", True)
+    set_seed(seed, deterministic=deterministic)
+    log_reproducibility_state(seed, deterministic)
 
     # ── Device ────────────────────────────────────────────────
     device = get_device()
@@ -275,7 +363,7 @@ def main() -> None:
     )
 
     # ── Dataset validation (Task 10) ──────────────────────────
-    if not validate_dataset(builder):
+    if not validate_dataset(builder, config):
         logger.error("Aborting due to dataset validation failure.")
         sys.exit(1)
 
@@ -304,6 +392,7 @@ def main() -> None:
     batch_size = train_cfg.get("batch_size", 8)
     num_workers = train_cfg.get("num_workers", 2)
     use_weighted = not args.no_weighted_sampler
+    recommend_batch_size(args.mode, batch_size)
 
     # Windows DataLoader constraints:
     # - persistent_workers requires num_workers > 0
@@ -321,10 +410,12 @@ def main() -> None:
     train_loader = builder.build_dataloader(
         "train", transform=train_tf, batch_size=batch_size,
         num_workers=num_workers, weighted_sampling=use_weighted,
+        seed=seed,
     )
     val_loader = builder.build_dataloader(
         "val", transform=val_tf, batch_size=batch_size * 2,
         num_workers=num_workers, weighted_sampling=False,
+        seed=seed,
     )
 
     logger.info("Train: %d batches (batch_size=%d)", len(train_loader), batch_size)

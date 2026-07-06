@@ -104,6 +104,11 @@ class TrainingEngine:
         # Batch timing
         self.batch_times: list[float] = []
         self.data_times: list[float] = []
+        self.transfer_times: list[float] = []
+        self.forward_times: list[float] = []
+        self.backward_times: list[float] = []
+        self.optimizer_times: list[float] = []
+        self.grad_norms: list[float] = []
 
         # Precision
         prec_cfg = config.get("precision", {})
@@ -143,8 +148,13 @@ class TrainingEngine:
 
         # Scheduler
         sched_cfg = config.get("scheduler", {})
-        total_steps = self.epochs * len(self.train_loader) // self.grad_accum_steps
-        warmup_steps = sched_cfg.get("warmup_steps", 200)
+        batches_per_epoch = len(self.train_loader)
+        if self.max_steps is not None:
+            batches_per_epoch = min(batches_per_epoch, self.max_steps)
+        optimizer_steps_per_epoch = max(math.ceil(batches_per_epoch / self.grad_accum_steps), 1)
+        total_steps = max(self.epochs * optimizer_steps_per_epoch, 1)
+        configured_warmup = sched_cfg.get("warmup_steps", 200)
+        warmup_steps = min(configured_warmup, max(total_steps // 3, 1))
         min_lr_ratio = sched_cfg.get("min_lr_ratio", 0.01)
 
         warmup_scheduler = LinearLR(
@@ -161,12 +171,17 @@ class TrainingEngine:
             milestones=[warmup_steps],
         )
         logger.info(
-            "Scheduler: CosineWithWarmup, warmup=%d steps, total=%d steps",
-            warmup_steps, total_steps,
+            "Scheduler: CosineWithWarmup, warmup=%d/%d configured steps, total=%d optimizer steps",
+            warmup_steps, configured_warmup, total_steps,
         )
 
         # AMP scaler
         self.scaler = GradScaler(enabled=self.use_amp)
+        logger.info(
+            "AMP: enabled=%s, scaler_enabled=%s, autocast_device=%s",
+            self.use_amp, self.scaler.is_enabled(), "cuda" if torch.cuda.is_available() else "cpu",
+        )
+        logger.info("Gradient clipping: max_norm=%.3f", self.grad_clip_norm)
 
         # Early stopping
         es_cfg = config.get("early_stopping", {})
@@ -179,9 +194,10 @@ class TrainingEngine:
         self.current_epoch = 0
         self.global_step = 0
         self.best_metrics: dict[str, float] = {
-            "val_accuracy": 0.0,
-            "val_f1_macro": 0.0,
+            "val_accuracy": -1.0,
+            "val_f1_macro": -1.0,
         }
+        self.early_stopping_best = -1.0
         self.patience_counter = 0
         self.history: list[dict[str, Any]] = []
 
@@ -319,39 +335,62 @@ class TrainingEngine:
         )
 
         data_start = time.perf_counter()
+        processed_batches = 0
 
         for batch_idx, (images, labels) in pbar:
+            processed_batches = batch_idx + 1
+            cuda_timing = torch.cuda.is_available()
             # Data loading time
             data_time = time.perf_counter() - data_start
             self.data_times.append(data_time)
 
             batch_start = time.perf_counter()
 
+            if cuda_timing:
+                torch.cuda.synchronize()
+            transfer_start = time.perf_counter()
             images = images.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
+            if cuda_timing:
+                torch.cuda.synchronize()
+            self.transfer_times.append(time.perf_counter() - transfer_start)
 
             # Forward pass with mixed precision
-            with autocast("cuda", enabled=self.use_amp):
+            forward_start = time.perf_counter()
+            autocast_device = "cuda" if self.device.type == "cuda" else "cpu"
+            with autocast(autocast_device, enabled=self.use_amp and self.device.type == "cuda"):
                 logits = self.model(images)
                 loss = self.criterion(logits, labels)
                 loss = loss / self.grad_accum_steps
+            if cuda_timing:
+                torch.cuda.synchronize()
+            self.forward_times.append(time.perf_counter() - forward_start)
 
             # Backward pass
+            backward_start = time.perf_counter()
             self.scaler.scale(loss).backward()
+            if cuda_timing:
+                torch.cuda.synchronize()
+            self.backward_times.append(time.perf_counter() - backward_start)
 
             # Accumulation step
             if (batch_idx + 1) % self.grad_accum_steps == 0:
+                optimizer_start = time.perf_counter()
                 if self.grad_clip_norm > 0:
                     self.scaler.unscale_(self.optimizer)
-                    nn.utils.clip_grad_norm_(
+                    grad_norm = nn.utils.clip_grad_norm_(
                         [p for p in self.model.parameters() if p.requires_grad],
                         self.grad_clip_norm,
                     )
+                    self.grad_norms.append(float(grad_norm.detach().cpu()))
 
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
                 self.optimizer.zero_grad()
                 self.scheduler.step()
+                if cuda_timing:
+                    torch.cuda.synchronize()
+                self.optimizer_times.append(time.perf_counter() - optimizer_start)
                 self.global_step += 1
 
                 # TensorBoard: per-step loss
@@ -401,6 +440,28 @@ class TrainingEngine:
 
             data_start = time.perf_counter()
 
+        # Apply any remaining gradients when the epoch/step limit is not
+        # divisible by gradient accumulation. Without this, smoke/debug runs
+        # silently drop their final partial accumulation.
+        if processed_batches > 0 and processed_batches % self.grad_accum_steps != 0:
+            optimizer_start = time.perf_counter()
+            if self.grad_clip_norm > 0:
+                self.scaler.unscale_(self.optimizer)
+                grad_norm = nn.utils.clip_grad_norm_(
+                    [p for p in self.model.parameters() if p.requires_grad],
+                    self.grad_clip_norm,
+                )
+                self.grad_norms.append(float(grad_norm.detach().cpu()))
+
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
+            self.optimizer.zero_grad()
+            self.scheduler.step()
+            if torch.cuda.is_available():
+                torch.cuda.synchronize()
+            self.optimizer_times.append(time.perf_counter() - optimizer_start)
+            self.global_step += 1
+
         pbar.close()
 
         return {
@@ -436,7 +497,8 @@ class TrainingEngine:
             images = images.to(self.device, non_blocking=True)
             labels = labels.to(self.device, non_blocking=True)
 
-            with autocast("cuda", enabled=self.use_amp):
+            autocast_device = "cuda" if self.device.type == "cuda" else "cpu"
+            with autocast(autocast_device, enabled=self.use_amp and self.device.type == "cuda"):
                 logits = self.model(images)
                 loss = self.criterion(logits, labels)
 
@@ -492,37 +554,58 @@ class TrainingEngine:
         if self.batch_times:
             avg_batch = sum(self.batch_times) / len(self.batch_times)
             avg_data = sum(self.data_times) / len(self.data_times) if self.data_times else 0
-            avg_compute = avg_batch  # batch_time = GPU forward+backward time
+            avg_transfer = sum(self.transfer_times) / len(self.transfer_times) if self.transfer_times else 0
+            avg_forward = sum(self.forward_times) / len(self.forward_times) if self.forward_times else 0
+            avg_backward = sum(self.backward_times) / len(self.backward_times) if self.backward_times else 0
+            avg_optimizer = sum(self.optimizer_times) / len(self.optimizer_times) if self.optimizer_times else 0
+            avg_compute = avg_forward + avg_backward + avg_optimizer
             imgs_per_sec = batch_size / (avg_batch + avg_data) if (avg_batch + avg_data) > 0 else 0
             data_pct = 100 * avg_data / (avg_batch + avg_data) if (avg_batch + avg_data) > 0 else 0
 
             report = {
                 "avg_batch_time_ms": round(avg_batch * 1000, 1),
                 "avg_data_time_ms": round(avg_data * 1000, 1),
+                "avg_transfer_time_ms": round(avg_transfer * 1000, 1),
+                "avg_forward_time_ms": round(avg_forward * 1000, 1),
+                "avg_backward_time_ms": round(avg_backward * 1000, 1),
+                "avg_optimizer_time_ms": round(avg_optimizer * 1000, 1),
                 "avg_compute_time_ms": round(avg_compute * 1000, 1),
                 "images_per_sec": round(imgs_per_sec, 1),
                 "data_loading_pct": round(data_pct, 1),
                 "total_batches_profiled": len(self.batch_times),
             }
+            if self.grad_norms:
+                report["avg_grad_norm"] = round(sum(self.grad_norms) / len(self.grad_norms), 4)
+                report["max_grad_norm"] = round(max(self.grad_norms), 4)
 
             logger.info("=" * 60)
             logger.info("THROUGHPUT REPORT")
             logger.info("-" * 60)
-            logger.info("  Avg batch (GPU compute): %6.1f ms", report["avg_compute_time_ms"])
-            logger.info("  Avg data loading:        %6.1f ms", report["avg_data_time_ms"])
+            logger.info("  Avg batch total:         %6.1f ms", report["avg_batch_time_ms"])
+            logger.info("  Avg data wait:           %6.1f ms", report["avg_data_time_ms"])
+            logger.info("  Avg H2D transfer:        %6.1f ms", report["avg_transfer_time_ms"])
+            logger.info("  Avg forward:             %6.1f ms", report["avg_forward_time_ms"])
+            logger.info("  Avg backward:            %6.1f ms", report["avg_backward_time_ms"])
+            logger.info("  Avg optimizer/scheduler: %6.1f ms", report["avg_optimizer_time_ms"])
             logger.info("  Images/sec:              %6.1f", report["images_per_sec"])
             logger.info("  Data loading overhead:   %5.1f%%", report["data_loading_pct"])
             logger.info("  Batches profiled:        %6d", report["total_batches_profiled"])
+            if "avg_grad_norm" in report:
+                logger.info("  Grad norm avg/max:       %.4f / %.4f",
+                            report["avg_grad_norm"], report["max_grad_norm"])
 
             # Bottleneck analysis
+            compute_pct = 100 * avg_compute / (avg_batch + avg_data) if (avg_batch + avg_data) > 0 else 0
             if data_pct > 50:
                 logger.warning("  BOTTLENECK: Data loading (%.0f%%). "
                              "Increase num_workers or enable pin_memory.", data_pct)
             elif data_pct > 30:
                 logger.info("  Data loading is significant (%.0f%%). "
                           "Consider increasing num_workers.", data_pct)
+            elif compute_pct > 60:
+                logger.info("  Pipeline is compute-bound. Data loading is efficient.")
             else:
-                logger.info("  Pipeline is GPU-bound. Data loading is efficient.")
+                logger.info("  No single dominant bottleneck from coarse timings.")
 
             # GPU memory summary
             if torch.cuda.is_available():
@@ -538,25 +621,14 @@ class TrainingEngine:
 
     def _checkpoint(self, epoch_metrics: dict[str, Any]) -> None:
         """Save checkpoints based on metric improvements."""
-        epoch = epoch_metrics["epoch"]
         ckpt_cfg = self.config.get("checkpointing", {})
-        experiment_name = self.config.get("experiment", {}).get("base_name", "bioclip2")
-
-        # Always save last checkpoint
-        if ckpt_cfg.get("save_last", True):
-            self._save_checkpoint(
-                f"{experiment_name}_last",
-                epoch_metrics,
-                save_optimizer=True,
-            )
 
         # Save best accuracy
         val_acc = epoch_metrics.get("val_accuracy", 0)
         if ckpt_cfg.get("save_best_accuracy", True):
             if val_acc > self.best_metrics.get("val_accuracy", 0) + self.min_delta:
                 self.best_metrics["val_accuracy"] = val_acc
-                name = f"{experiment_name}_best_acc_{val_acc:.4f}_epoch{epoch}"
-                self._save_checkpoint(name, epoch_metrics)
+                self._save_checkpoint("best_accuracy.pt", epoch_metrics)
                 logger.info("  New best accuracy: %.4f", val_acc)
 
         # Save best F1
@@ -564,9 +636,30 @@ class TrainingEngine:
         if ckpt_cfg.get("save_best_f1", True):
             if val_f1 > self.best_metrics.get("val_f1_macro", 0) + self.min_delta:
                 self.best_metrics["val_f1_macro"] = val_f1
-                name = f"{experiment_name}_best_f1_{val_f1:.4f}_epoch{epoch}"
-                self._save_checkpoint(name, epoch_metrics)
+                self._save_checkpoint("best_f1.pt", epoch_metrics)
                 logger.info("  New best F1 (macro): %.4f", val_f1)
+
+        # Always save canonical latest checkpoint and training state after
+        # best-metric bookkeeping so resume sees the current best values.
+        if ckpt_cfg.get("save_last", True):
+            self._save_checkpoint(
+                "latest.pt",
+                epoch_metrics,
+                save_optimizer=True,
+            )
+
+    def _trainable_state_dict(self) -> dict[str, torch.Tensor]:
+        """Return only trainable model tensors for compact checkpoints."""
+        trainable_names = {
+            name for name, param in self.model.named_parameters()
+            if param.requires_grad
+        }
+        state = self.model.state_dict()
+        return {
+            name: tensor.detach().cpu()
+            for name, tensor in state.items()
+            if name in trainable_names
+        }
 
     def _save_checkpoint(
         self,
@@ -575,36 +668,33 @@ class TrainingEngine:
         save_optimizer: bool = False,
     ) -> None:
         """Save a checkpoint with descriptive name."""
-        ckpt_dir = self.checkpoint_dir / name
-        ckpt_dir.mkdir(parents=True, exist_ok=True)
-
-        # Save LoRA adapter (if applicable)
-        try:
-            self.model.backbone.visual.save_pretrained(str(ckpt_dir / "lora_adapter"))
-        except AttributeError:
-            # No LoRA applied — save full backbone state
-            torch.save(
-                self.model.backbone.state_dict(),
-                ckpt_dir / "backbone.pt",
-            )
-
-        # Save classifier head
-        torch.save(
-            self.model.classifier.state_dict(),
-            ckpt_dir / "classifier_head.pt",
-        )
+        ckpt_path = self.checkpoint_dir / name
+        torch.save({
+            "format_version": 2,
+            "name": name,
+            "timestamp": datetime.now().isoformat(),
+            "epoch": metrics["epoch"],
+            "global_step": self.global_step,
+            "metrics": {k: v for k, v in metrics.items() if isinstance(v, (int, float))},
+            "class_names": self.class_names,
+            "num_classes": len(self.class_names),
+            "trainable_model_state": self._trainable_state_dict(),
+        }, ckpt_path)
 
         # Save optimizer state (for resume)
         if save_optimizer:
             torch.save({
+                "format_version": 2,
                 "optimizer": self.optimizer.state_dict(),
                 "scheduler": self.scheduler.state_dict(),
                 "scaler": self.scaler.state_dict(),
                 "epoch": metrics["epoch"],
                 "global_step": self.global_step,
                 "best_metrics": self.best_metrics,
+                "early_stopping_best": self.early_stopping_best,
                 "patience_counter": self.patience_counter,
-            }, ckpt_dir / "training_state.pt")
+                "checkpoint": name,
+            }, self.checkpoint_dir / "training_state.pt")
 
         # Save metadata
         metadata = {
@@ -614,7 +704,7 @@ class TrainingEngine:
             "class_names": self.class_names,
             "num_classes": len(self.class_names),
         }
-        with open(ckpt_dir / "metadata.json", "w") as f:
+        with open(self.checkpoint_dir / f"{Path(name).stem}_metadata.json", "w") as f:
             json.dump(metadata, f, indent=2)
 
     def resume_from(self, checkpoint_dir: str | Path) -> None:
@@ -627,8 +717,37 @@ class TrainingEngine:
             Path to a checkpoint directory containing training_state.pt,
             lora_adapter/ or backbone.pt, and classifier_head.pt.
         """
-        checkpoint_dir = Path(checkpoint_dir)
-        logger.info("Resuming from: %s", checkpoint_dir)
+        checkpoint_path = Path(checkpoint_dir)
+        logger.info("Resuming from: %s", checkpoint_path)
+
+        if checkpoint_path.is_file():
+            checkpoint = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
+            state = checkpoint.get("trainable_model_state", checkpoint.get("model_state", {}))
+            missing, unexpected = self.model.load_state_dict(state, strict=False)
+            logger.info(
+                "  Loaded trainable checkpoint tensors (missing=%d, unexpected=%d)",
+                len(missing), len(unexpected),
+            )
+
+            state_path = checkpoint_path.parent / "training_state.pt"
+            if state_path.exists():
+                train_state = torch.load(state_path, map_location=self.device, weights_only=False)
+                self.optimizer.load_state_dict(train_state["optimizer"])
+                self.scheduler.load_state_dict(train_state["scheduler"])
+                self.scaler.load_state_dict(train_state["scaler"])
+                self.current_epoch = train_state["epoch"] + 1
+                self.global_step = train_state["global_step"]
+                self.best_metrics = train_state["best_metrics"]
+                self.early_stopping_best = train_state.get(
+                    "early_stopping_best",
+                    self.best_metrics.get(self.monitor_metric, -1.0),
+                )
+                self.patience_counter = train_state["patience_counter"]
+                logger.info("  Resumed optimizer state at epoch %d, step %d",
+                            self.current_epoch, self.global_step)
+            return
+
+        checkpoint_dir = checkpoint_path
 
         # Load classifier head
         head_path = checkpoint_dir / "classifier_head.pt"
@@ -641,10 +760,15 @@ class TrainingEngine:
         backbone_path = checkpoint_dir / "backbone.pt"
         if lora_path.exists():
             from peft import PeftModel
-            self.model.backbone.visual = PeftModel.from_pretrained(
-                self.model.backbone.visual, str(lora_path)
-            )
-            logger.info("  Loaded LoRA adapter")
+            if isinstance(self.model.backbone.visual, PeftModel):
+                self.model.backbone.visual.load_adapter(str(lora_path), adapter_name="resume", is_trainable=True)
+                self.model.backbone.visual.set_adapter("resume")
+                logger.info("  Loaded LoRA adapter into existing PEFT model")
+            else:
+                self.model.backbone.visual = PeftModel.from_pretrained(
+                    self.model.backbone.visual, str(lora_path), is_trainable=True
+                )
+                logger.info("  Loaded LoRA adapter")
         elif backbone_path.exists():
             self.model.backbone.load_state_dict(
                 torch.load(backbone_path, weights_only=True)
@@ -661,6 +785,10 @@ class TrainingEngine:
             self.current_epoch = state["epoch"] + 1
             self.global_step = state["global_step"]
             self.best_metrics = state["best_metrics"]
+            self.early_stopping_best = state.get(
+                "early_stopping_best",
+                self.best_metrics.get(self.monitor_metric, -1.0),
+            )
             self.patience_counter = state["patience_counter"]
             logger.info("  Resumed at epoch %d, step %d",
                          self.current_epoch, self.global_step)
@@ -671,9 +799,10 @@ class TrainingEngine:
             return False
 
         current_value = epoch_metrics.get(self.monitor_metric, 0)
-        best_value = self.best_metrics.get(self.monitor_metric, 0)
+        best_value = self.early_stopping_best
 
         if current_value > best_value + self.min_delta:
+            self.early_stopping_best = current_value
             self.patience_counter = 0
         else:
             self.patience_counter += 1

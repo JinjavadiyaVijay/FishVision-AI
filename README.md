@@ -1,78 +1,140 @@
-<div align="center">
-<img src="assets/6eb57068-116b-11ee-a55a-9335f156a1e7 (2).gif" alt="Fish Detection System" width="100%">
+# FishVision-AI
 
-<br/>
+Production-grade fish recognition and measurement pipeline.
 
-# 🐠 FishVision-AI System
+## Architecture
 
-**Real-time fish species identification powered by YOLOv8 and OAK-D Pro**
+FishVision-AI combines:
 
-<br/>
+- YOLO detection for fish localization
+- Fish crop extraction
+- BioCLIP 2 / OpenCLIP species classification
+- Length and weight estimation
+- Adult/juvenile classification
+- OAK-D Pro deployment path
+- Streamlit dashboard for inspection and demos
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-FF6B35?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ultralytics/ultralytics)
-[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
-[![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)](LICENSE)
+Current Phase 3 work focuses on BioCLIP 2 classification for the processed OzFish dataset.
 
-</div>
+## Current Dataset
 
----
+- Source: OzFish V1
+- Processed layout: `datasets/processed/{train,val,test}/<species>/`
+- Current classifier classes: 157 species after exclusions
+- Metadata: `datasets/metadata/master_species_catalog.json`
 
-## ✨ Overview
+The training entrypoint validates split consistency and class mapping before training starts.
 
-FishVision-AI is an intelligent pipeline for aquatic species monitoring. It leverages state-of-the-art YOLOv8 object detection combined with stereoscopic depth sensing from OAK-D Pro hardware. 
+## Environment
 
-The system supports identifying 13 unique fish species and provides accurate tracking, length estimation, and deduplication logic, helping you get a complete snapshot of the marine ecosystem.
+Use the existing Conda environment. Do not create a project `.venv`.
 
-## 🚀 Quick Start
-
-**1 — Clone**
-```bash
-git clone https://github.com/YOUR_USERNAME/FishVision-AI.git
-cd FishVision-AI
+```powershell
+C:\ProgramData\miniconda3\envs\ai\python.exe --version
 ```
 
-**2 — Install Requirements**
-```bash
-python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # macOS / Linux
+Install any missing research dependencies into that environment, not into `venv/`.
 
-pip install -r requirements.txt
+## Training Gates
+
+Full LoRA training should not start until these gates pass:
+
+```powershell
+# 1. Zero-shot BioCLIP baseline
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\evaluate_zeroshot.py --split val --max-batches 50
+
+# 2. Linear-probe smoke test
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\train_bioclip.py --smoke-test --mode linear_probe
+
+# 3. Linear-probe debug run
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\train_bioclip.py --debug --mode linear_probe
+
+# 4. LoRA smoke test
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\train_bioclip.py --smoke-test --mode lora
+
+# 5. LoRA resume verification
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\train_bioclip.py --mode lora --epochs 2 --max-steps 10 --resume <experiment>\checkpoints\latest.pt
 ```
 
-**3 — Place Models**
-Download `best.pt` (Fish species model) and place it in the `models/` folder.
-If deploying with the OAK-D Pro, ensure `yolov8n.pt` (Veto gate model) is also available.
+Only after those pass should a full LoRA run be started.
 
-**4 — Run Options**
+## Training Modes
 
-* **Streamlit Dashboard (Photo Inference):**
-  ```bash
-  streamlit run app.py
-  ```
-  *(Alternatively, you can right-click and run `run_app.ps1` on Windows)*
+```powershell
+# True smoke test: 30 train batches, limited validation
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\train_bioclip.py --smoke-test --mode linear_probe
 
-* **Real-time Camera Pipeline (OAK-D Pro required):**
-  ```bash
-  python -m src.oak_runner
-  ```
+# Debug run: 500 train batches
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\train_bioclip.py --debug --mode linear_probe
 
----
-
-## 🗂️ Project Structure
-
-```
-FishVision-AI/
-├── app.py                   # Streamlit web application
-├── run_app.ps1              # Quick launch script for Windows
-├── data.yaml                # YOLO training configuration
-├── requirements.txt         # Project dependencies
-├── src/                     # Core system modules (Tracking, Camera, Inference)
-├── models/                  # YOLOv8 weight files
-├── logs/                    # Event logs, CSVs, and capture images
-└── assets/                  # Documentation assets
+# Full run, after validation gates
+C:\ProgramData\miniconda3\envs\ai\python.exe scripts\train_bioclip.py --mode lora --epochs 30
 ```
 
-## 📄 License
-This project is **MIT licensed** — see [LICENSE](LICENSE). Dataset (if used) may have separate licensing.
+Supported model modes:
+
+- `linear_probe`: frozen BioCLIP 2 visual backbone, train classifier head only
+- `lora`: frozen backbone with LoRA adapters on OpenCLIP visual modules
+- `full_finetune`: all parameters trainable, not recommended for 6 GB VRAM
+
+## Experiment Outputs
+
+Experiments are written under `experiments/<name>_<timestamp>/`.
+
+Current outputs include:
+
+- `config/full_config.yaml`
+- `config/class_mapping.json`
+- `config/dataset_summary.json`
+- `metrics/training_history.csv`
+- `logs/events.out.tfevents...`
+- `checkpoints/latest.pt`
+- `checkpoints/best_accuracy.pt`
+- `checkpoints/best_f1.pt`
+- `checkpoints/training_state.pt`
+
+Zero-shot baselines write:
+
+- `metrics/zeroshot_metrics.json`
+- `metrics/zeroshot_metrics.csv`
+
+## Hardware Notes
+
+Target machine:
+
+- Windows
+- RTX 3050 Laptop GPU
+- 6 GB VRAM
+- Conda env: `ai`
+
+Measured DataLoader setting:
+
+- `num_workers=2`
+- `pin_memory=True`
+- `persistent_workers=True`
+- `prefetch_factor=2`
+
+On this Windows laptop, `num_workers=4` was slower than `num_workers=2`.
+
+## Repository Layout
+
+```text
+classification/
+  config/          YAML config
+  dataloader/      processed split loader
+  models/          BioCLIP/OpenCLIP backbone and classifier head
+  trainer/         training loop, checkpointing, profiling
+  utilities/       device and seed helpers
+scripts/
+  train_bioclip.py
+  evaluate_zeroshot.py
+  verify_backbone.py
+  test_dataset.py
+docs/
+experiments/
+src/               existing YOLO/OAK-D application modules
+```
+
+## Status
+
+Phase 3 is active. The project should continue incrementally: verify, profile, then train. Avoid full LoRA training until smoke, debug, resume, and zero-shot baseline gates are complete.

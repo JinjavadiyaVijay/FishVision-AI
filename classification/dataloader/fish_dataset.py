@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import Counter
+from functools import partial
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -35,6 +36,13 @@ logger = logging.getLogger(__name__)
 
 # Supported image extensions
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
+
+
+def _seed_worker(worker_id: int, base_seed: int) -> None:
+    """Seed NumPy and PyTorch RNGs inside DataLoader workers."""
+    worker_seed = base_seed + worker_id
+    np.random.seed(worker_seed)
+    torch.manual_seed(worker_seed)
 
 
 class FishSpeciesDataset(Dataset):
@@ -280,6 +288,7 @@ class FishDatasetBuilder:
         batch_size: int = 8,
         num_workers: int = 2,
         weighted_sampling: bool = False,
+        seed: int = 42,
     ) -> DataLoader:
         """
         Build a DataLoader with optional weighted sampling.
@@ -302,8 +311,19 @@ class FishDatasetBuilder:
         sampler = None
         shuffle = (split_name == "train")
 
+        generator = torch.Generator()
+        generator.manual_seed(seed)
+
         if weighted_sampling and split_name == "train":
-            sampler = self.build_weighted_sampler(split_name)
+            _, labels = self._split_data[split_name]
+            counts = Counter(labels)
+            sample_weights = [1.0 / counts[label] for label in labels]
+            sampler = WeightedRandomSampler(
+                weights=sample_weights,
+                num_samples=len(labels),
+                replacement=True,
+                generator=generator,
+            )
             shuffle = False  # Sampler handles ordering
 
         loader_kwargs = {
@@ -313,6 +333,8 @@ class FishDatasetBuilder:
             "num_workers": num_workers,
             "pin_memory": torch.cuda.is_available(),
             "drop_last": (split_name == "train"),
+            "generator": generator,
+            "worker_init_fn": partial(_seed_worker, base_seed=seed),
         }
 
         # Workers-dependent optimizations
