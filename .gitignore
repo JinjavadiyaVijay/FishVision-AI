@@ -29,6 +29,7 @@ __pycache__/
 .idea/
 *.swp
 *.crswap
+*.pdf
 
 # ── Private ──────────────────────────────────────────────────────
 private_docs/
