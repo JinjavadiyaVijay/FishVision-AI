@@ -34,23 +34,27 @@ __pycache__/
 # ── Private ──────────────────────────────────────────────────────
 private_docs/
 
-# ===============================
-# Datasets (ignore generated data)
-# ===============================
-
+# ── Datasets (generated data) ────────────────────────────────────
 OzFish/
-
+data_sets/
 datasets/raw/
 datasets/processed/
 datasets/cache/
 datasets/reports/
 datasets/statistics/
 datasets/exports/
+datasets/metadata/split_manifest.json
 
-# Training outputs
+# ── Training outputs ─────────────────────────────────────────────
 checkpoints/
 runs/
 outputs/
-
-# Experiment outputs
 experiments/
+
+# ── Archive (local history, not for git) ─────────────────────────
+archive/
+
+# ── Local virtual environments ───────────────────────────────────
+venv/
+.venv/
+env/
