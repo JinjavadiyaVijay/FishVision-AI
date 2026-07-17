@@ -1,2 +1,0 @@
-split,classes,samples,top1_accuracy,top5_accuracy,images_per_sec,elapsed_seconds,max_batches,timestamp
-val,157,800,0.2525,0.4975,26.163814632630626,30.576581100000112,50,2026-07-06T13:03:18.629217
