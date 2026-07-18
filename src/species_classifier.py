@@ -301,7 +301,18 @@ class SpeciesClassifierInference:
         model = SpeciesClassifier(backbone=backbone, classifier=classifier)
 
         ckpt = torch.load(ckpt_path, map_location=self.device, weights_only=False)
-        state_dict = ckpt.get("model_state_dict", ckpt)
+
+        # The training engine saves weights under 'trainable_model_state'
+        # (only LoRA adapters + classifier head — frozen backbone excluded).
+        # Fall back to 'model_state_dict' for compatibility, then the raw dict.
+        state_dict = (
+            ckpt.get("trainable_model_state")
+            or ckpt.get("model_state_dict")
+            or ckpt
+        )
+        # Keep only tensor values (drop metadata scalars like epoch, format_version)
+        state_dict = {k: v for k, v in state_dict.items()
+                      if isinstance(v, torch.Tensor)}
         model.load_state_dict(state_dict, strict=False)
 
         model = model.to(self.device)

@@ -343,12 +343,50 @@ def main() -> None:
     log_gpu_memory("after model load")
 
     # ── Build DataLoader ─────────────────────────────────────────────
-    # Read only from individual classification/config/dataset.yaml.
-    # Never load full_config.yaml — it contains Python-serialized objects
-    # (TorchVersion) incompatible with yaml.safe_load().
+    # CRITICAL: class indices in the DataLoader MUST match the training
+    # class mapping exactly. We load class_mapping.json from the checkpoint
+    # (written by the training engine) as the authoritative source of truth.
+    # Never re-derive class ordering from disk — set.intersection() across
+    # splits can produce a different order if any split is missing a species.
     import yaml
 
-    processed_dir_rel = "datasets/processed"  # fallback matching training run
+    # Load the training class mapping (species → index)
+    class_mapping_path = (
+        ckpt_dir.parent / "config" / "class_mapping.json"  # experiments/.../config/
+    )
+    if not class_mapping_path.exists():
+        raise FileNotFoundError(
+            f"class_mapping.json not found at {class_mapping_path}. "
+            "This file is required to align DataLoader labels with model outputs."
+        )
+
+    with open(class_mapping_path) as f:
+        name_to_idx: dict[str, int] = json.load(f)
+
+    # Rebuild as a sorted list (index → species name) — matches training order
+    training_class_names: list[str] = [
+        name for name, _ in sorted(name_to_idx.items(), key=lambda x: x[1])
+    ]
+
+    # Validate that the checkpoint metadata agrees
+    meta_class_names: list[str] = clf.class_names
+    if training_class_names != meta_class_names:
+        logger.error(
+            "CLASS MAPPING MISMATCH: class_mapping.json has %d classes, "
+            "checkpoint metadata has %d classes. First divergence at index %d.",
+            len(training_class_names), len(meta_class_names),
+            next(
+                (i for i, (a, b) in enumerate(zip(training_class_names, meta_class_names)) if a != b),
+                min(len(training_class_names), len(meta_class_names)),
+            ),
+        )
+        raise RuntimeError(
+            "class_mapping.json and best_accuracy_metadata.json disagree on "
+            "class ordering. Evaluation cannot proceed safely."
+        )
+
+    # Load processed_dir path from dataset.yaml (clean YAML, no Python tags)
+    processed_dir_rel = "datasets/processed"
     dataset_yaml = PROJECT_ROOT / "classification" / "config" / "dataset.yaml"
     if dataset_yaml.exists():
         try:
@@ -362,29 +400,84 @@ def main() -> None:
 
     processed_dir = PROJECT_ROOT / processed_dir_rel
 
-    logger.info("Building %s DataLoader from %s ...", args.split, processed_dir)
-    builder = FishDatasetBuilder(
-        processed_dir=processed_dir,
-        exclude_species=["Lutjanus_erythropterus", "Sphyraena_qenie"],
-    )
-    val_transform = clf._transform          # reuse same transform as inference
-    loader = builder.build_dataloader(
-        args.split,
+    # ── Diagnostic header (required) ─────────────────────────────────
+    print("\n" + "─" * 66)
+    print("  EVALUATION DIAGNOSTIC")
+    print("─" * 66)
+    print(f"  Checkpoint      : {ckpt_dir / 'best_accuracy.pt'}")
+    print(f"  Num classes     : {len(training_class_names)}")
+    print(f"  LoRA active     : {any('lora' in n for n, _ in clf._model.named_modules())}")
+    print(f"  Preprocessor    : {clf._transform}")
+    print(f"  Class mapping   : class_mapping.json ({class_mapping_path.name})")
+    print(f"\n  First 10 class mappings (index → species):")
+    for i, name in enumerate(training_class_names[:10]):
+        print(f"    [{i:3d}] {name}")
+    print("─" * 66 + "\n")
+
+    # ── Build dataset with the EXACT training class ordering ──────────
+    # We bypass FishDatasetBuilder's auto-ordering and build FishSpeciesDataset
+    # directly, using training_class_names as the authoritative class list.
+    from classification.dataloader.fish_dataset import FishSpeciesDataset
+
+    split_dir = processed_dir / args.split
+    if not split_dir.exists():
+        raise FileNotFoundError(
+            f"Split directory not found: {split_dir}"
+        )
+
+    _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}
+    image_paths: list = []
+    labels: list = []
+    missing_species = []
+
+    for species_name in training_class_names:
+        species_dir = split_dir / species_name
+        if not species_dir.exists():
+            missing_species.append(species_name)
+            continue
+        class_idx = name_to_idx[species_name]
+        images = sorted([
+            f for f in species_dir.iterdir()
+            if f.is_file() and f.suffix.lower() in _IMAGE_EXTENSIONS
+        ])
+        for img_path in images:
+            image_paths.append(img_path)
+            labels.append(class_idx)
+
+    if missing_species:
+        logger.warning(
+            "%d species from training not found in %s split: %s",
+            len(missing_species), args.split, missing_species,
+        )
+
+    val_transform = clf._transform          # same transform as inference
+    dataset = FishSpeciesDataset(
+        image_paths=image_paths,
+        labels=labels,
+        class_names=training_class_names,
         transform=val_transform,
+    )
+
+    from torch.utils.data import DataLoader as TorchDataLoader
+    loader = TorchDataLoader(
+        dataset,
         batch_size=args.batch_size,
+        shuffle=False,
         num_workers=args.workers,
-        weighted_sampling=False,
+        pin_memory=torch.cuda.is_available(),
+        drop_last=False,
     )
 
     logger.info(
-        "Evaluating %d images (%d batches) on %s split ...",
-        len(loader.dataset), len(loader), args.split,
+        "Dataset: %d images, %d species, %d missing from %s split",
+        len(image_paths), len(training_class_names) - len(missing_species),
+        len(missing_species), args.split,
     )
-    log_gpu_memory("before evaluation")
-
     # ── Run evaluation ────────────────────────────────────────────────
     raw = run_evaluation(clf, loader, device)
-    metrics = compute_metrics(raw, clf.class_names)
+    # Use training_class_names as the authoritative label list
+    # (validated above to be identical to clf.class_names)
+    metrics = compute_metrics(raw, training_class_names)
     log_gpu_memory("after evaluation")
 
     # ── Print report ─────────────────────────────────────────────────

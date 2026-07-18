@@ -34,6 +34,7 @@ from src.oak_detector import (
 )
 from src.tracker import FishTracker
 from src.veto_gate import VetoGate
+from src.pipeline import FishPipeline
 
 # ── constants ──────────────────────────────────────────────────────────────────
 MIN_CONF          = 0.60          # confidence threshold
@@ -202,7 +203,19 @@ def run():
     print("  Press Q or Esc to stop.")
     print("=" * 60)
 
-    # ── Step 1: Connect device ────────────────────────────────────────────────
+    # ── BioCLIP pipeline (optional — degrades gracefully if unavailable) ──────
+    _fish_pipeline = FishPipeline(
+        bioclip_enabled=True,
+        bioclip_top_k=3,
+    )
+    _fish_pipeline.preload()   # eager load; avoids latency on first frame
+    if _fish_pipeline.bioclip_available:
+        print(f"  BioCLIP        : {_fish_pipeline.num_bioclip_species} species")
+    else:
+        print("  BioCLIP        : unavailable (YOLO-only mode)")
+    print("=" * 60)
+
+    # ── Step 1: Connect device ────────────────────────────────────────────────────
     print("\n  Scanning for OAK-D Pro ...")
     try:
         device = connect_device()
@@ -252,6 +265,31 @@ def run():
             # ── YOLO fish inference ───────────────────────────────────────────
             results = model(frame, imgsz=640, verbose=False)[0]
             ts      = datetime.now().isoformat(timespec="seconds")
+
+            # ── BioCLIP: classify the whole frame in one pipeline call ─────────
+            # run_frame() reuses the YOLO result implicitly through PIL conversion;
+            # we only use the species labels here, not the second YOLO pass,
+            # because the OAK-D YOLO (oak_detector.model) runs on-device.
+            # So we call classify_crop directly per bbox after building raw_detections.
+            # Species lookup dict: (x1,y1,x2,y2) → top-k list
+            _frame_rgb = frame[:, :, ::-1]  # BGR→RGB view
+            _pil_frame = None              # lazy PIL conversion
+
+            def _bioclip_for_box(x1, y1, x2, y2):
+                """Return BioCLIP top-1 (species, conf) or (None, 0.0)."""
+                nonlocal _pil_frame
+                if not _fish_pipeline.bioclip_available:
+                    return None, 0.0
+                try:
+                    if _pil_frame is None:
+                        from PIL import Image as _PILImage
+                        _pil_frame = _PILImage.fromarray(_frame_rgb.astype(np.uint8))
+                    preds = _fish_pipeline._clf.classify_crop(_pil_frame, (x1, y1, x2, y2))
+                    if preds:
+                        return preds[0]["species"], preds[0]["confidence"]
+                except Exception:
+                    pass
+                return None, 0.0
 
             # ── Build detection list (with 3-layer filtering) ─────────────────
             raw_detections: list[dict] = []
@@ -312,7 +350,18 @@ def run():
                     "depth_mm": Z,
                     "weight_g": weight_g,
                     "maturity": maturity,
+                    # BioCLIP fine-grained species (added non-destructively)
+                    "bioclip_species": None,
+                    "bioclip_conf": 0.0,
                 })
+
+            # ── BioCLIP classification (batched after filtering) ──────────────
+            for det in raw_detections:
+                bc_species, bc_conf = _bioclip_for_box(
+                    det["x1"], det["y1"], det["x2"], det["y2"]
+                )
+                det["bioclip_species"] = bc_species
+                det["bioclip_conf"]    = bc_conf
 
             # ── Update tracker ────────────────────────────────────────────────
             tracked = tracker.update(raw_detections)
@@ -348,7 +397,17 @@ def run():
                         f"{weight_g}g  {maturity}" if weight_g else maturity,
                     ]
                 else:
-                    lines = [f"{trk.species}  {trk.best_conf:.0%}", depth_label]
+                    # Include BioCLIP species in the OSD if available
+                    bc_sp   = det["bioclip_species"] if det else None
+                    bc_conf = det["bioclip_conf"]    if det else 0.0
+                    bc_line = (f"BioCLIP: {bc_sp.replace('_',' ')}  {bc_conf:.0%}"
+                               if bc_sp else "")
+                    lines = [
+                        f"{trk.species}  {trk.best_conf:.0%}",
+                        depth_label,
+                    ]
+                    if bc_line:
+                        lines.append(bc_line)
 
                 _draw_detection(frame, x1, y1, x2, y2, colour, lines,
                                 track_id=trk.track_id)
