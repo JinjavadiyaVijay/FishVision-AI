@@ -22,6 +22,13 @@ from src.visualization import (
     render_metrics,
 )
 
+# BioCLIP 2 fine-grained species classifier (loaded lazily)
+try:
+    from src.species_classifier import SpeciesClassifierInference
+    _BIOCLIP_AVAILABLE = True
+except Exception:
+    _BIOCLIP_AVAILABLE = False
+
 # ---------------------------------------------------------------------------
 # Page config — must be the first Streamlit call
 # ---------------------------------------------------------------------------
@@ -72,7 +79,25 @@ with st.sidebar:
     )
 
     st.divider()
-    st.caption("Fish Detection System · YOLOv8n · 13 species")
+
+    # BioCLIP toggle
+    if _BIOCLIP_AVAILABLE:
+        st.subheader("BioCLIP 2 Classification")
+        use_bioclip = st.toggle(
+            "Enable species identification",
+            value=False,
+            help=(
+                "Run BioCLIP 2 (157 species, 73.8% top-1 accuracy) on each "
+                "detected fish crop for fine-grained species identification."
+            ),
+        )
+        bioclip_top_k = st.slider("Top-K predictions", 1, 10, 3) if use_bioclip else 3
+    else:
+        use_bioclip = False
+        bioclip_top_k = 3
+
+    st.divider()
+    st.caption("Fish Detection System · YOLOv8n · 13 species · BioCLIP 2 · 157 species")
 
 # ---------------------------------------------------------------------------
 # Main content
@@ -119,6 +144,19 @@ df = detections_to_dataframe(result, cm_per_pixel, adult_threshold_cm)
 stats = summary_stats(df)
 annotated_image = result.plot()
 
+# ── BioCLIP 2 classification (optional) ─────────────────────────────────────
+bioclip_results: dict[int, list[dict]] = {}  # fish_id → predictions
+if use_bioclip and _BIOCLIP_AVAILABLE and not df.empty:
+    with st.spinner("Running BioCLIP species identification…"):
+        try:
+            clf = st.cache_resource(SpeciesClassifierInference)(top_k=bioclip_top_k)
+            for _, row in df.iterrows():
+                bbox = (row["x1"], row["y1"], row["x2"], row["y2"])
+                preds = clf.classify_crop(image, bbox)
+                bioclip_results[int(row["fish_id"])] = preds
+        except Exception as exc:
+            st.warning(f"BioCLIP classification failed: {exc}")
+
 # ---------------------------------------------------------------------------
 # Results
 # ---------------------------------------------------------------------------
@@ -133,3 +171,27 @@ with summary_col:
     render_class_counts(df)
 
 render_detection_table(df, cm_per_pixel)
+
+# ── BioCLIP 2 species results ────────────────────────────────────────────────
+if bioclip_results:
+    st.divider()
+    st.subheader("🔬 BioCLIP 2 — Fine-Grained Species Identification")
+    st.caption(
+        f"Model: BioCLIP 2 ViT-L/14 + LoRA · 157 species · "
+        f"Val accuracy 73.8% · Top-5 accuracy 92.3%"
+    )
+    for fish_id, preds in bioclip_results.items():
+        if not preds:
+            continue
+        top1 = preds[0]
+        with st.expander(
+            f"Fish #{fish_id} — {top1['species'].replace('_', ' ')} "
+            f"({top1['confidence']:.1%} confidence)",
+            expanded=True,
+        ):
+            import pandas as pd
+            df_preds = pd.DataFrame(preds)
+            df_preds["species"] = df_preds["species"].str.replace("_", " ")
+            df_preds["confidence"] = df_preds["confidence"].map("{:.1%}".format)
+            df_preds.columns = ["Rank", "Species", "Confidence"]
+            st.dataframe(df_preds, use_container_width=True, hide_index=True)
