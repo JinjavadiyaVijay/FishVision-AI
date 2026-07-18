@@ -343,17 +343,24 @@ def main() -> None:
     log_gpu_memory("after model load")
 
     # ── Build DataLoader ─────────────────────────────────────────────
+    # Read only from individual classification/config/dataset.yaml.
+    # Never load full_config.yaml — it contains Python-serialized objects
+    # (TorchVersion) incompatible with yaml.safe_load().
     import yaml
 
-    cfg_path = exp_dir / "config" / "full_config.yaml"
-    config: dict = {}
-    if cfg_path.exists():
-        with open(cfg_path) as f:
-            config = yaml.safe_load(f) or {}
+    processed_dir_rel = "datasets/processed"  # fallback matching training run
+    dataset_yaml = PROJECT_ROOT / "classification" / "config" / "dataset.yaml"
+    if dataset_yaml.exists():
+        try:
+            with open(dataset_yaml) as f:
+                ds_cfg = yaml.safe_load(f) or {}
+            processed_dir_rel = (
+                ds_cfg.get("dataset", {}).get("processed_dir", processed_dir_rel)
+            )
+        except yaml.YAMLError as exc:
+            logger.warning("Could not parse dataset.yaml (%s); using default", exc)
 
-    processed_dir = PROJECT_ROOT / config.get("dataset", {}).get(
-        "processed_dir", "datasets/processed"
-    )
+    processed_dir = PROJECT_ROOT / processed_dir_rel
 
     logger.info("Building %s DataLoader from %s ...", args.split, processed_dir)
     builder = FishDatasetBuilder(

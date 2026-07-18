@@ -320,22 +320,60 @@ class SpeciesClassifierInference:
         )
 
     def _load_config(self) -> dict:
-        """Load full_config.yaml from experiment dir, or fall back to classification/config/."""
+        """
+        Build inference config from safe, individual YAML files only.
+
+        Deliberately avoids full_config.yaml, which is a training artifact
+        containing serialized Python objects (e.g. TorchVersion) that are
+        incompatible with yaml.safe_load().
+
+        Sources used (all are plain YAML, no Python tags):
+          1. classification/config/model.yaml      — backbone + lora + classifier
+          2. classification/config/training.yaml   — batch size, workers
+          3. classification/config/dataset.yaml    — processed_dir path
+          (training.yaml, augmentation.yaml, logging.yaml loaded if present)
+
+        Hard-coded fallbacks match the values used in the training run
+        (bioclip2_full_20260716_160143) so inference is always correct even
+        if the YAML files are missing.
+        """
         import yaml
 
-        # Try experiment-saved config first
-        exp_dir = self._checkpoint_dir.parent  # checkpoints/ → experiment/
-        cfg_path = exp_dir / "config" / "full_config.yaml"
-        if cfg_path.exists():
-            with open(cfg_path) as f:
-                return yaml.safe_load(f) or {}
+        # Safe defaults — identical to the values in the training run
+        config: dict = {
+            "backbone": {
+                "library": "open_clip",
+                "name": "hf-hub:imageomics/bioclip-2",
+                "image_size": 224,
+            },
+            "lora": {
+                "enabled": True,
+                "rank": 16,
+                "alpha": 32,
+                "dropout": 0.1,
+                "bias": "none",
+            },
+            "classifier": {
+                "type": "linear",
+                "dropout": 0.1,
+            },
+            "dataset": {
+                "processed_dir": "datasets/processed",
+            },
+        }
 
-        # Fallback: merge active YAML configs
-        config: dict = {}
+        # Merge individual classification/config/*.yaml files.
+        # These are hand-authored files with no Python-specific YAML tags.
         cfg_root = _PROJECT_ROOT / "classification" / "config"
         for name in ("model", "training", "augmentation", "dataset", "logging"):
             p = cfg_root / f"{name}.yaml"
             if p.exists():
-                with open(p) as f:
-                    config.update(yaml.safe_load(f) or {})
+                try:
+                    with open(p) as f:
+                        loaded = yaml.safe_load(f)
+                    if isinstance(loaded, dict):
+                        config.update(loaded)
+                except yaml.YAMLError as exc:
+                    logger.warning("Skipping %s (parse error: %s)", p.name, exc)
+
         return config
