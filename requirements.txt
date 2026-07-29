@@ -1,5 +1,29 @@
-streamlit>=1.35.0
+# ── FishVision-AI Dependencies ────────────────────────────────────────────────
+
+# Core ML
+torch>=2.0.0
+torchvision>=0.15.0
 ultralytics>=8.2.0
+
+# BioCLIP backbone
+open_clip_torch>=2.24.0
+peft>=0.11.0
+
+# Web interface
+streamlit>=1.35.0
+
+# Data processing
 pillow>=10.0.0
 pandas>=2.0.0
 numpy>=1.24.0
+
+# Evaluation
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+
+# Config
+pyyaml>=6.0
+
+# OAK-D Pro (optional — only needed for live detection)
+# depthai>=3.6.0
+# opencv-python>=4.8.0
