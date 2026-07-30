@@ -1,0 +1,629 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   FishVision-AI — Premium Marine Research UI
+   Design language: Apple / Nothing / DJI / National Geographic field-software
+   NOT a dashboard-template look — earthy, restrained, scientific.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── 1. Design tokens ────────────────────────────────────────────────────── */
+:root {
+  --forest: {{FOREST}};       /* primary   */
+  --ocean: {{OCEAN}};         /* secondary */
+  --surface: {{SURFACE}};     /* page background */
+  --surface-2: {{SURFACE_2}}; /* card background */
+  --coral: {{CORAL}};         /* accent    */
+  --moss: {{MOSS}};           /* accent 2  */
+  --text: {{TEXT}};
+  --muted: {{MUTED}};
+  --border: {{BORDER}};
+  --shadow: {{SHADOW}};
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --font-head: 'Sora', 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+/* ── 2. Strip every trace of Streamlit chrome ───────────────────────────── */
+#MainMenu,
+footer,
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+div[data-testid="stAppDeployButton"],
+[data-testid="collapsedControl"],
+#stDecoration,
+.viewerBadge_container__1QSob,
+.stAppDeployButton {
+  display: none !important;
+}
+
+.block-container {
+  padding-top: 1.1rem !important;
+  padding-bottom: 3rem !important;
+  max-width: 1180px;
+}
+
+html,
+body,
+[class*="css"],
+.stApp {
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
+.stApp {
+  background: var(--surface);
+}
+
+h1,
+h2,
+h3,
+h4,
+.fv-head {
+  font-family: var(--font-head);
+  letter-spacing: -0.01em;
+}
+
+/* Kill default Streamlit widget label spacing bloat */
+.stSlider,
+.stNumberInput,
+.stTextInput,
+.stSelectbox {
+  margin-bottom: .1rem;
+}
+
+/* ── 3. Top navigation bar ───────────────────────────────────────────────── */
+.fv-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .55rem .2rem .9rem .2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.4rem;
+}
+
+.fv-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+
+.fv-nav-brand img {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+}
+
+.fv-nav-title {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.18rem;
+  color: var(--forest);
+  line-height: 1.1;
+}
+
+.fv-nav-sub {
+  font-size: .74rem;
+  color: var(--muted);
+  letter-spacing: .02em;
+  margin-top: 1px;
+}
+
+/* icon buttons in the header act on real Streamlit buttons underneath */
+.fv-icon-btn button {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  color: var(--forest) !important;
+  width: 40px;
+  height: 40px;
+  padding: 0 !important;
+  transition: all .15s ease;
+}
+
+.fv-icon-btn button:hover {
+  border-color: var(--coral) !important;
+  color: var(--coral) !important;
+  background: rgba(217, 123, 95, .07) !important;
+}
+
+.fv-icon-btn button:focus {
+  box-shadow: none !important;
+}
+
+/* ── 4. Hero section ─────────────────────────────────────────────────────── */
+.fv-hero {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+  padding: 1.6rem .4rem 2.2rem .4rem;
+}
+
+.fv-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--moss);
+  background: rgba(117, 142, 103, .12);
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  margin-bottom: .9rem;
+}
+
+.fv-hero h1 {
+  font-size: 2.15rem;
+  font-weight: 700;
+  color: var(--forest);
+  line-height: 1.15;
+  margin: 0 0 .6rem 0;
+}
+
+.fv-hero p {
+  color: var(--muted);
+  font-size: 1.02rem;
+  max-width: 32rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.fv-hero-illustration {
+  flex-shrink: 0;
+  width: 260px;
+}
+
+.fv-hero-illustration img {
+  width: 100%;
+  height: auto;
+}
+
+/* ── 5. Status / info banners (replace st.success/st.warning look) ─────── */
+.fv-banner {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  border-radius: var(--radius-sm);
+  padding: .65rem 1rem;
+  font-size: .86rem;
+  margin: .2rem 0 1.1rem 0;
+  border: 1px solid var(--border);
+}
+
+.fv-banner.ok {
+  background: rgba(117, 142, 103, .10);
+  border-color: rgba(117, 142, 103, .35);
+  color: #3d5233;
+}
+
+.fv-banner.warn {
+  background: rgba(217, 123, 95, .10);
+  border-color: rgba(217, 123, 95, .35);
+  color: #8a4127;
+}
+
+/* ── 6. Pill tab navigation (replaces default st.tabs look) ─────────────── */
+.stTabs [data-baseweb="tab-list"] {
+  gap: .4rem;
+  border-bottom: none;
+  margin-bottom: 1.1rem;
+}
+
+.stTabs [data-baseweb="tab"] {
+  height: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px !important;
+  padding: .5rem 1.1rem;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: .88rem;
+}
+
+.stTabs [data-baseweb="tab"] p {
+  font-size: .88rem;
+}
+
+.stTabs [aria-selected="true"] {
+  background: var(--forest) !important;
+  color: var(--surface) !important;
+  border-color: var(--forest) !important;
+}
+
+.stTabs [data-baseweb="tab-highlight"] {
+  display: none;
+}
+
+.stTabs [data-baseweb="tab-border"] {
+  display: none;
+}
+
+/* ── 7. Upload dropzone (Linear / Canva style, not default Streamlit) ──── */
+.fv-upload-label {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--forest);
+  margin-bottom: .6rem;
+}
+
+[data-testid="stFileUploaderDropzone"] {
+  background: var(--surface-2) !important;
+  border: 1.5px dashed var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 1.6rem !important;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+[data-testid="stFileUploaderDropzone"]:hover {
+  border-color: var(--coral) !important;
+  background: rgba(217, 123, 95, .045) !important;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] svg {
+  display: none;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] span {
+  font-family: var(--font-head);
+  color: var(--forest) !important;
+  font-weight: 600;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] small {
+  color: var(--muted) !important;
+}
+
+[data-testid="stBaseButton-secondary"] {
+  background: var(--forest) !important;
+  color: var(--surface) !important;
+  border-radius: 10px !important;
+  border: none !important;
+  font-weight: 500 !important;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"]::before {
+  content: "◎";
+  font-size: 1.6rem;
+  color: var(--coral);
+  display: block;
+  margin-bottom: .3rem;
+}
+
+/* ── 8. Metric / stat cards ──────────────────────────────────────────────── */
+.fv-metric-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .8rem;
+  margin: .3rem 0 1.3rem 0;
+}
+
+.fv-metric-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.05rem 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+}
+
+.fv-metric-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(22, 58, 50, .07);
+  color: var(--forest);
+}
+
+.fv-metric-val {
+  font-family: var(--font-head);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--forest);
+  line-height: 1.1;
+}
+
+.fv-metric-lbl {
+  font-size: .72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 2px;
+}
+
+/* ── 9. Section headers ──────────────────────────────────────────────────── */
+.fv-section-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--forest);
+  margin: 1.5rem 0 .8rem 0;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── 10. Species / detection cards ───────────────────────────────────────── */
+.fv-species-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: .95rem 1.1rem;
+  margin-bottom: .6rem;
+  transition: border-color .15s, transform .15s;
+}
+
+.fv-species-card:hover {
+  border-color: var(--coral);
+  transform: translateY(-1px);
+}
+
+.fv-species-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fv-species-name {
+  font-weight: 600;
+  font-size: .95rem;
+  color: var(--text);
+}
+
+.fv-species-tag {
+  font-size: .68rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: .1rem .5rem;
+  border-radius: 999px;
+}
+
+.fv-species-sci {
+  font-size: .78rem;
+  color: var(--muted);
+  margin-top: .15rem;
+  font-style: italic;
+}
+
+.fv-conf-track {
+  flex: 1;
+  background: var(--border);
+  border-radius: 3px;
+  height: 5px;
+  margin-top: .55rem;
+}
+
+.fv-conf-fill {
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--moss), var(--coral));
+}
+
+.fv-conf-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-top: .55rem;
+}
+
+.fv-conf-num {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--coral);
+  min-width: 38px;
+  text-align: right;
+}
+
+/* ── 11. Timeline (detection order) ──────────────────────────────────────── */
+.fv-timeline {
+  position: relative;
+  padding-left: 1.6rem;
+}
+
+.fv-timeline::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--border);
+}
+
+.fv-tl-item {
+  position: relative;
+  padding-bottom: 1.05rem;
+}
+
+.fv-tl-item::before {
+  content: "";
+  position: absolute;
+  left: -1.6rem;
+  top: 3px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 2px solid var(--coral);
+}
+
+.fv-tl-title {
+  font-weight: 600;
+  font-size: .88rem;
+  color: var(--text);
+}
+
+.fv-tl-meta {
+  font-size: .76rem;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* ── 12. Floating control panel (st.popover contents) ────────────────────── */
+[data-testid="stPopoverBody"] {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 18px 46px var(--shadow) !important;
+  padding: 1.1rem 1.2rem !important;
+  background: var(--surface-2) !important;
+  min-width: 360px;
+}
+
+.fv-panel-section {
+  margin-bottom: .95rem;
+}
+
+.fv-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: .83rem;
+  color: var(--forest);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: .55rem;
+}
+
+.fv-panel-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: .9rem 0;
+}
+
+/* Sliders — recolor Streamlit's default blue to the coral accent */
+[data-baseweb="slider"] div[role="slider"] {
+  background-color: var(--coral) !important;
+}
+
+div[data-testid="stSliderTickBarMin"],
+div[data-testid="stSliderTickBarMax"] {
+  color: var(--muted) !important;
+}
+
+.stSlider [data-baseweb="slider"]>div>div {
+  background: var(--coral) !important;
+}
+
+/* Buttons generally */
+.stButton button,
+.stDownloadButton button {
+  border-radius: 10px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface-2) !important;
+  color: var(--forest) !important;
+  font-weight: 500 !important;
+}
+
+.stButton button:hover,
+.stDownloadButton button:hover {
+  border-color: var(--coral) !important;
+  color: var(--coral) !important;
+}
+
+/* Primary CTA-style buttons (marked via help text hack not needed; kept minimal) */
+
+/* Expanders → clean cards */
+[data-testid="stExpander"] {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--surface-2) !important;
+  overflow: hidden;
+}
+
+[data-testid="stExpander"] summary {
+  font-weight: 500;
+}
+
+/* Dataframes */
+[data-testid="stDataFrame"] {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+/* Distribution / bin summary cards reuse .fv-metric-card look via helper class */
+.fv-ring-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fv-ring-label {
+  font-size: .78rem;
+  color: var(--muted);
+}
+
+.fv-ring-val {
+  font-family: var(--font-head);
+  font-weight: 700;
+  color: var(--forest);
+  font-size: 1.05rem;
+}
+
+/* ── 13. Subtle background watermark + footer ─────────────────────────────── */
+.fv-watermark {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background:
+    radial-gradient(circle at 15% 20%, var(--moss) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, var(--coral) 0%, transparent 40%);
+}
+
+.fv-footer {
+  margin-top: 2.5rem;
+  padding: 1.2rem 0 .4rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: .78rem;
+  color: var(--muted);
+  letter-spacing: .02em;
+}
+
+/* Dark theme banner text contrast */
+[data-theme="dark"] .fv-banner.ok,
+.stApp:has([data-testid="stMarkdown"]:first-child) .fv-banner.ok {
+  color: var(--moss);
+}
+
+[data-theme="dark"] .fv-banner.warn {
+  color: var(--coral);
+}
+
+/* Responsive metric grid */
+@media (max-width: 900px) {
+  .fv-metric-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .fv-metric-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fv-hero h1 {
+    font-size: 1.65rem;
+  }
+}
