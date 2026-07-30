@@ -208,7 +208,7 @@ def run():
         bioclip_enabled=True,
         bioclip_top_k=3,
     )
-    _fish_pipeline.preload()   # eager load; avoids latency on first frame
+    _fish_pipeline.preload(yolo=True, bioclip=True)   # eager load; avoids latency on first frame
     if _fish_pipeline.bioclip_available:
         print(f"  BioCLIP        : {_fish_pipeline.num_bioclip_species} species")
     else:

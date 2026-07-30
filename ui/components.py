@@ -1,7 +1,6 @@
 """
 ui/components.py — small reusable render functions. Every function returns an
-HTML string; app-level modules decide when/where to st.markdown() it. No
-widgets, no session_state, no pipeline calls live here.
+HTML string; app-level modules decide when/where to st.markdown() it.
 """
 from __future__ import annotations
 
@@ -20,7 +19,7 @@ def section_label(icon_name: str, text: str) -> str:
 def metric_card(icon_name: str, value: str, label: str) -> str:
     return f"""
     <div class="fv-metric-card">
-      <div class="fv-metric-icon">{svg.icon(icon_name, 19)}</div>
+      <div class="fv-metric-icon">{svg.icon(icon_name, 18)}</div>
       <div>
         <div class="fv-metric-val">{value}</div>
         <div class="fv-metric-lbl">{label}</div>
@@ -29,7 +28,6 @@ def metric_card(icon_name: str, value: str, label: str) -> str:
 
 
 def stat_strip(cards_html: list[str], columns: int = 4) -> str:
-    """Wrap a list of metric_card() strings in the responsive grid row."""
     style = f'style="grid-template-columns:repeat({columns},1fr);"' if columns != 4 else ""
     return f'<div class="fv-metric-row" {style}>{"".join(cards_html)}</div>'
 
@@ -58,8 +56,12 @@ def timeline(items_html: list[str]) -> str:
     return f'<div class="fv-timeline">{"".join(items_html)}</div>'
 
 
-def ring_with_label(pct: float, label_text: str, color: str, track: str = "#E7E3D8") -> str:
+def ring_with_label(pct: float, label_text: str, accent: str = "coral") -> str:
     return (
-        f'<div class="fv-ring-wrap">{svg.confidence_ring(pct, 84, 8, color, track, f"{pct:.0%}")}</div>'
+        f'{svg.confidence_ring(pct, 84, 7, accent, f"{pct:.0%}")}'
         f'<div class="fv-ring-label">{label_text}</div>'
     )
+
+
+def slider_value(text: str) -> str:
+    return f'<span class="fv-slider-val">{text}</span>'

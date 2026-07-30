@@ -16,7 +16,7 @@ def render_performance_tab(eval_data: dict | None) -> None:
 
     if eval_data is None:
         st.markdown(
-            comp.banner("warn", "alert", "Evaluation results not found. Run `python scripts/evaluate_model.py` first."),
+            comp.banner("warn", "Evaluation results not found. Run `python scripts/evaluate_model.py` first."),
             unsafe_allow_html=True,
         )
         return
@@ -57,7 +57,7 @@ def _render_global_metrics(eval_data: dict) -> None:
 def _render_summary_banner(eval_data: dict) -> None:
     st.markdown(
         comp.banner(
-            "ok", "info",
+            "ok",
             f"Test set — <b>{eval_data['total_images']:,} images</b> · "
             f"<b>{eval_data['num_classes']} species</b> · "
             f"<b>{eval_data['ms_per_image']:.1f} ms/image</b> · "

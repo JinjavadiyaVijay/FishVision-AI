@@ -45,6 +45,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_EXPERIMENTS_DIR = _PROJECT_ROOT / "experiments"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -109,6 +110,7 @@ class PipelineResult:
     annotated_frame: Optional[np.ndarray] = None   # BGR numpy (from result.plot())
     elapsed_yolo_ms: float = 0.0
     elapsed_bioclip_ms: float = 0.0
+    mode: str = "yolo_bioclip"  # "yolo_bioclip" | "bioclip_only"
 
     @property
     def total_fish(self) -> int:
@@ -161,7 +163,9 @@ class FishPipeline:
         bioclip_checkpoint_dir: Optional[Path] = None,
         device: str = "auto",
     ) -> None:
-        self._yolo_model_path = self._resolve_yolo_path(yolo_model_path)
+        self._yolo_model_path = (
+            Path(yolo_model_path) if yolo_model_path is not None else None
+        )
         self._bioclip_enabled = bioclip_enabled
         self._bioclip_top_k = bioclip_top_k
         self._bioclip_checkpoint_dir = bioclip_checkpoint_dir
@@ -173,7 +177,8 @@ class FishPipeline:
 
         logger.info(
             "FishPipeline created (yolo=%s, bioclip=%s, top_k=%d, device=%s)",
-            self._yolo_model_path.name, bioclip_enabled, bioclip_top_k, device,
+            self._yolo_model_path.name if self._yolo_model_path else "auto",
+            bioclip_enabled, bioclip_top_k, device,
         )
 
     # ── Public API ────────────────────────────────────────────────────────────
@@ -185,6 +190,7 @@ class FishPipeline:
         iou: float = 0.45,
         cm_per_pixel: float = 0.0,
         adult_threshold_cm: float = 10.0,
+        use_yolo: bool = True,
     ) -> PipelineResult:
         """
         Run the full pipeline on a PIL image.
@@ -201,12 +207,17 @@ class FishPipeline:
             Set > 0 to populate estimated_length_cm and life_stage.
         adult_threshold_cm : float
             Length threshold for life_stage = "Adult".
+        use_yolo : bool
+            When False, skip YOLO and classify the full frame with BioCLIP only.
 
         Returns
         -------
         PipelineResult
         """
-        self._ensure_loaded()
+        if not use_yolo:
+            return self._run_bioclip_only(image)
+
+        self._ensure_yolo_loaded()
 
         # ── Step 1: YOLO detection ────────────────────────────────────────────
         from src.detector import run_inference
@@ -225,7 +236,11 @@ class FishPipeline:
                 annotated_frame=annotated,
                 elapsed_yolo_ms=elapsed_yolo,
                 elapsed_bioclip_ms=0.0,
+                mode="yolo_bioclip",
             )
+
+        # BioCLIP is heavy — only load it once we know there are crops to classify.
+        self._ensure_bioclip_loaded()
 
         # ── Step 2: BioCLIP classification (per-crop) ─────────────────────────
         t1 = time.perf_counter()
@@ -237,6 +252,57 @@ class FishPipeline:
             annotated_frame=annotated,
             elapsed_yolo_ms=elapsed_yolo,
             elapsed_bioclip_ms=elapsed_bioclip,
+            mode="yolo_bioclip",
+        )
+
+    def _run_bioclip_only(self, image: Image.Image) -> PipelineResult:
+        """Classify the entire frame with BioCLIP — no YOLO localisation."""
+        image_rgb = image.convert("RGB")
+        annotated = np.array(image_rgb)[:, :, ::-1].copy()
+
+        self._ensure_bioclip_loaded()
+        if not self._bioclip_available or self._clf is None:
+            logger.warning("BioCLIP-only mode requested but classifier unavailable")
+            return PipelineResult(
+                detections=[],
+                annotated_frame=annotated,
+                elapsed_yolo_ms=0.0,
+                elapsed_bioclip_ms=0.0,
+                mode="bioclip_only",
+            )
+
+        t0 = time.perf_counter()
+        top_k = self._clf.classify(image_rgb)
+        elapsed_bioclip = (time.perf_counter() - t0) * 1000
+
+        if not top_k:
+            return PipelineResult(
+                detections=[],
+                annotated_frame=annotated,
+                elapsed_yolo_ms=0.0,
+                elapsed_bioclip_ms=elapsed_bioclip,
+                mode="bioclip_only",
+            )
+
+        w, h = image_rgb.size
+        detections = [
+            FishDetection(
+                fish_id=1,
+                yolo_class="(BioCLIP only)",
+                yolo_confidence=0.0,
+                bbox=(0.0, 0.0, float(w), float(h)),
+                species=top_k[0]["species"],
+                species_confidence=top_k[0]["confidence"],
+                top_k_species=top_k,
+            )
+        ]
+
+        return PipelineResult(
+            detections=detections,
+            annotated_frame=annotated,
+            elapsed_yolo_ms=0.0,
+            elapsed_bioclip_ms=elapsed_bioclip,
+            mode="bioclip_only",
         )
 
     def run_frame(
@@ -266,17 +332,43 @@ class FishPipeline:
         pil_image = Image.fromarray(rgb.astype(np.uint8))
         return self.run(pil_image, conf=conf, iou=iou)
 
-    def preload(self) -> None:
+    def preload(self, *, yolo: bool = True, bioclip: bool = False) -> None:
         """
-        Explicitly load both models now rather than on first call.
-        Call this at startup to avoid latency on the first inference.
+        Explicitly load models now rather than on first call.
+
+        By default only YOLO is loaded (fast startup). Pass ``bioclip=True``
+        for live-video loops that need zero first-frame classification latency.
         """
-        self._ensure_loaded()
+        if yolo:
+            self._ensure_yolo_loaded()
+        if bioclip:
+            self._ensure_bioclip_loaded()
 
     @property
     def bioclip_available(self) -> bool:
         """True if BioCLIP loaded successfully."""
         return self._bioclip_available
+
+    @property
+    def bioclip_checkpoint_available(self) -> bool:
+        """True if a BioCLIP checkpoint exists on disk (without loading weights)."""
+        if not self._bioclip_enabled:
+            return False
+        if self._bioclip_checkpoint_dir is not None:
+            return (Path(self._bioclip_checkpoint_dir) / "best_accuracy.pt").exists()
+        manifest = _PROJECT_ROOT / "models" / "bioclip_production" / "model_manifest.json"
+        if manifest.exists():
+            return True
+        exp_ckpt = _PROJECT_ROOT / "experiments" / "bioclip2_full_20260716_160143" / "checkpoints" / "best_accuracy.pt"
+        if exp_ckpt.exists():
+            return True
+        if not _EXPERIMENTS_DIR.exists():
+            return False
+        return any(
+            (d / "checkpoints" / "best_accuracy.pt").exists()
+            for d in _EXPERIMENTS_DIR.iterdir()
+            if d.is_dir()
+        )
 
     @property
     def num_bioclip_species(self) -> int:
@@ -287,11 +379,16 @@ class FishPipeline:
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
-    def _resolve_yolo_path(self, path: Optional[str | Path]) -> Path:
-        """Find the YOLO weights file."""
-        if path is not None:
-            return Path(path)
-        # Search in models/ — prefer best.pt, then yolov8n.pt
+    def _resolve_yolo_path(self) -> Path:
+        """Find the YOLO weights file when detection is enabled."""
+        if self._yolo_model_path is not None:
+            path = Path(self._yolo_model_path)
+            if path.exists():
+                return path
+            raise FileNotFoundError(
+                f"Model weights not found at: {path}\n"
+                "Place best.pt inside the models/ directory."
+            )
         for candidate in ("models/best.pt", "models/yolov8n.pt"):
             p = _PROJECT_ROOT / candidate
             if p.exists():
@@ -301,17 +398,21 @@ class FishPipeline:
             "Place best.pt there or pass yolo_model_path explicitly."
         )
 
-    def _ensure_loaded(self) -> None:
-        """Load YOLO and BioCLIP once; no-op on subsequent calls."""
+    def _ensure_yolo_loaded(self) -> None:
+        """Load YOLO once; no-op on subsequent calls."""
         if self._yolo is None:
             self._load_yolo()
+
+    def _ensure_bioclip_loaded(self) -> None:
+        """Load BioCLIP once when enabled; no-op on subsequent calls."""
         if self._bioclip_enabled and self._clf is None:
             self._load_bioclip()
 
     def _load_yolo(self) -> None:
         from src.detector import load_model
-        logger.info("Loading YOLO: %s", self._yolo_model_path)
-        self._yolo = load_model(self._yolo_model_path)
+        yolo_path = self._resolve_yolo_path()
+        logger.info("Loading YOLO: %s", yolo_path)
+        self._yolo = load_model(yolo_path)
         logger.info("YOLO loaded: %d classes", len(self._yolo.names))
 
     def _load_bioclip(self) -> None:
