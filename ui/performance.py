@@ -58,6 +58,7 @@ def _render_summary_banner(eval_data: dict) -> None:
     st.markdown(
         comp.banner(
             "ok",
+            "check",
             f"Test set — <b>{eval_data['total_images']:,} images</b> · "
             f"<b>{eval_data['num_classes']} species</b> · "
             f"<b>{eval_data['ms_per_image']:.1f} ms/image</b> · "

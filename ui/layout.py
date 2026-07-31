@@ -39,7 +39,7 @@ def render_header() -> tuple:
             about_pop = st.popover("", icon=":material/info:", width="stretch")
         with b_github:
             st.link_button(
-                "", "https://github.com",
+                "", "https://github.com/JinjavadiyaVijay/FishVision-AI",
                 icon=":material/code:", width="stretch",
             )
         with b_theme:
@@ -149,7 +149,7 @@ def render_settings_panel(settings_pop, default_yolo_path: str, eval_data: dict 
         )
         use_yolo = st.toggle(
             "Use YOLO detection",
-            value=True,
+            value=False,
             help="Off = skip YOLO and classify the whole image with BioCLIP only (best for single-fish photos)",
         )
 
