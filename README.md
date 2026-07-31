@@ -2,7 +2,7 @@
 
   <img src="assets/animation_1.gif" width="850" alt="FishVision-AI Demo">
 
-  <h1>🐟 FishVision-AI</h1>
+  <h1> FishVision-AI</h1>
 
   <h3>Marine Fish Detection, Species Classification & Biometric Estimation</h3>
 
