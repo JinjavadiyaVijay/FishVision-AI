@@ -1,0 +1,19 @@
+{
+  "_comment": "Production model manifest for FishVision-AI BioCLIP 2 classifier.",
+  "_note": "This file points to the active checkpoint. The inference code reads this to locate weights.",
+  "model": "BioCLIP 2 ViT-L/14 + LoRA (rank=16)",
+  "num_classes": 157,
+  "val_accuracy": 0.7379,
+  "val_top5_accuracy": 0.9233,
+  "f1_macro": 0.7815,
+  "epoch": 29,
+  "training_experiment": "bioclip2_full_20260716_160143",
+  "checkpoint_path": "experiments/bioclip2_full_20260716_160143/checkpoints/best_accuracy.pt",
+  "metadata_path": "experiments/bioclip2_full_20260716_160143/checkpoints/best_accuracy_metadata.json",
+  "backbone": "hf-hub:imageomics/bioclip-2",
+  "lora_rank": 16,
+  "lora_alpha": 32,
+  "image_size": 224,
+  "promoted_at": "2026-07-18",
+  "status": "production"
+}

@@ -1,0 +1,554 @@
+scientific_name,family,genus,image_count,common_name,dataset_source,is_viable,is_recommended,class_id
+Lethrinus punctulatus,Lethrinidae,Lethrinus,6095,Bluespotted emperor,OzFish,True,True,0
+Pterocaesio digramma,Caesionidae,Pterocaesio,3172,,OzFish,True,True,1
+Lethrinus atkinsoni,Lethrinidae,Lethrinus,2635,Pacific yellowtail emperor,OzFish,True,True,2
+Lutjanus sebae,Lutjanidae,Lutjanus,2338,Red emperor,OzFish,True,True,3
+Thalassoma lutescens,Labridae,Thalassoma,2007,Sunset wrasse,OzFish,True,True,4
+Lethrinus rubrioperculatus,Lethrinidae,Lethrinus,1782,Spotcheek emperor,OzFish,True,True,5
+Thalassoma lunare,Labridae,Thalassoma,1725,Moon wrasse,OzFish,True,True,6
+Pomacentrus coelestis,Pomacentridae,Pomacentrus,1693,Neon damselfish,OzFish,True,True,7
+Lutjanus vitta,Lutjanidae,Lutjanus,1435,Brownstripe red snapper,OzFish,True,True,8
+Melichthys niger,Balistidae,Melichthys,1338,,OzFish,True,True,9
+Cirrhilabrus temminckii,Labridae,Cirrhilabrus,1256,,OzFish,True,True,10
+Carangoides gymnostethus,Carangidae,Carangoides,1202,,OzFish,True,True,11
+Carangoides fulvoguttatus,Carangidae,Carangoides,1153,,OzFish,True,True,12
+Siganus fuscescens,Siganidae,Siganus,1142,Mottled spinefoot,OzFish,True,True,13
+Acanthurus triostegus,Acanthuridae,Acanthurus,1088,Convict surgeonfish,OzFish,True,True,14
+Epinephelus areolatus,Serranidae,Epinephelus,998,Areolate grouper,OzFish,True,True,15
+Pentapodus porosus,Nemipteridae,Pentapodus,930,,OzFish,True,True,16
+Pterocaesio tile,Caesionidae,Pterocaesio,846,Dark-banded fusilier,OzFish,True,True,17
+Chromis viridis,Pomacentridae,Chromis,754,Blue-green chromis,OzFish,True,True,18
+Epinephelus multinotatus,Serranidae,Epinephelus,675,,OzFish,True,True,19
+Acanthurus grammoptilus,Acanthuridae,Acanthurus,674,,OzFish,True,True,20
+Ctenochaetus striatus,Acanthuridae,Ctenochaetus,664,,OzFish,True,True,21
+Lethrinus nebulosus,Lethrinidae,Lethrinus,650,Spangled emperor,OzFish,True,True,22
+Siganus argenteus,Siganidae,Siganus,633,Streamlined spinefoot,OzFish,True,True,23
+Chlorurus sordidus,Scaridae,Chlorurus,619,Daisy parrotfish,OzFish,True,True,24
+Coris caudimacula,Labridae,Coris,616,,OzFish,True,True,25
+Abudefduf sexfasciatus,Pomacentridae,Abudefduf,606,,OzFish,True,True,26
+Labroides dimidiatus,Labridae,Labroides,578,,OzFish,True,True,27
+Thalassoma amblycephalum,Labridae,Thalassoma,549,,OzFish,True,True,28
+Abalistes stellatus,Balistidae,Abalistes,543,,OzFish,True,True,29
+Pseudojuloides severnsi,Labridae,Pseudojuloides,512,,OzFish,True,True,30
+Pentapodus nagasakiensis,Nemipteridae,Pentapodus,511,,OzFish,True,True,31
+Parupeneus multifasciatus,Mullidae,Parupeneus,472,,OzFish,True,True,32
+Lutjanus bohar,Lutjanidae,Lutjanus,438,Two-spot red snapper,OzFish,True,True,33
+Atule mate,Carangidae,Atule,437,,OzFish,True,True,34
+Scarus prasiognathos,Scaridae,Scarus,433,,OzFish,True,True,35
+Carcharhinus melanopterus,Carcharhinidae,Carcharhinus,426,Blacktip reef shark,OzFish,True,True,36
+Cirrhilabrus morrisoni,Labridae,Cirrhilabrus,421,,OzFish,True,True,37
+Mulloidichthys flavolineatus,Mullidae,Mulloidichthys,414,,OzFish,True,True,38
+Alepes vari,Carangidae,Alepes,402,,OzFish,True,True,39
+Chaetodon auriga,Chaetodontidae,Chaetodon,396,Threadfin butterflyfish,OzFish,True,True,40
+Sufflamen fraenatum,Balistidae,Sufflamen,371,,OzFish,True,True,41
+Choerodon cyanodus,Labridae,Choerodon,366,,OzFish,True,True,42
+Carangoides orthogrammus,Carangidae,Carangoides,354,,OzFish,True,True,43
+Plectropomus maculatus,Serranidae,Plectropomus,348,,OzFish,True,True,44
+Naso annulatus,Acanthuridae,Naso,346,,OzFish,True,True,45
+Odonus niger,Balistidae,Odonus,342,Redfang triggerfish,OzFish,True,True,46
+Parupeneus cyclostomus,Mullidae,Parupeneus,323,,OzFish,True,True,47
+Carcharhinus amblyrhynchos,Carcharhinidae,Carcharhinus,320,Grey reef shark,OzFish,True,True,48
+Parupeneus indicus,Mullidae,Parupeneus,320,Indian goatfish,OzFish,True,True,49
+Scarus schlegeli,Scaridae,Scarus,309,,OzFish,True,True,50
+Epinephelus fasciatus,Serranidae,Epinephelus,307,Blacktip grouper,OzFish,True,True,51
+Chromis fumea,Pomacentridae,Chromis,301,,OzFish,True,True,52
+Epinephelus rivulatus,Serranidae,Epinephelus,298,,OzFish,True,True,53
+Naso lituratus,Acanthuridae,Naso,296,Orangespine unicornfish,OzFish,True,True,54
+Caranx melampygus,Carangidae,Caranx,294,Bluefin trevally,OzFish,True,True,55
+Trachurus novaezelandiae,Carangidae,Trachurus,292,,OzFish,True,True,56
+Choerodon cauteroma,Labridae,Choerodon,290,,OzFish,True,True,57
+Bodianus solatus,Labridae,Bodianus,288,,OzFish,True,True,58
+Selaroides leptolepis,Carangidae,Selaroides,286,,OzFish,True,True,59
+Gnathanodon speciosus,Carangidae,Gnathanodon,284,,OzFish,True,True,60
+Acanthurus olivaceus,Acanthuridae,Acanthurus,284,Orangespot surgeonfish,OzFish,True,True,61
+Naso unicornis,Acanthuridae,Naso,282,Bluespine unicornfish,OzFish,True,True,62
+Lagocephalus sceleratus,Tetraodontidae,Lagocephalus,280,,OzFish,True,True,63
+Lethrinus variegatus,Lethrinidae,Lethrinus,276,Slender emperor,OzFish,True,True,64
+Lutjanus lutjanus,Lutjanidae,Lutjanus,268,,OzFish,True,True,65
+Parupeneus spilurus,Mullidae,Parupeneus,264,,OzFish,True,True,66
+Saurida undosquamis,Synodontidae,Saurida,264,,OzFish,True,True,67
+Coris aygula,Labridae,Coris,260,,OzFish,True,True,68
+Lutjanus carponotatus,Lutjanidae,Lutjanus,258,,OzFish,True,True,69
+Chromis weberi,Pomacentridae,Chromis,256,,OzFish,True,True,70
+Echeneis naucrates,Echeneidae,Echeneis,252,,OzFish,True,True,71
+Chromis margaritifer,Pomacentridae,Chromis,252,,OzFish,True,True,72
+Scolopsis bilineata,Nemipteridae,Scolopsis,244,,OzFish,True,True,73
+Chaetodon assarius,Chaetodontidae,Chaetodon,242,,OzFish,True,True,74
+Scolopsis xenochrous,Nemipteridae,Scolopsis,240,,OzFish,True,True,75
+Hologymnosus annulatus,Labridae,Hologymnosus,237,,OzFish,True,True,76
+Scarus ghobban,Scaridae,Scarus,236,,OzFish,True,True,77
+Parupeneus barberinoides,Mullidae,Parupeneus,226,,OzFish,True,True,78
+Halichoeres hortulanus,Labridae,Halichoeres,220,Checkerboard wrasse,OzFish,True,True,79
+Caesio teres,Caesionidae,Caesio,212,,OzFish,True,True,80
+Sufflamen chrysopterum,Balistidae,Sufflamen,210,Halfmoon triggerfish,OzFish,True,True,81
+Scarus rivulatus,Scaridae,Scarus,208,Surf parrotfish,OzFish,True,True,82
+Halichoeres trimaculatus,Labridae,Halichoeres,207,,OzFish,True,True,83
+Naso brevirostris,Acanthuridae,Naso,206,,OzFish,True,True,84
+Parapercis clathrata,Pinguipedidae,Parapercis,206,,OzFish,True,True,85
+Chaetodon plebeius,Chaetodontidae,Chaetodon,202,,OzFish,True,True,86
+Chlorurus capistratoides,Scaridae,Chlorurus,202,,OzFish,True,True,87
+Dascyllus aruanus,Pomacentridae,Dascyllus,201,,OzFish,True,True,88
+Caesio cuning,Caesionidae,Caesio,190,Redbelly yellowtail fusilier,OzFish,True,False,89
+Acanthurus dussumieri,Acanthuridae,Acanthurus,190,,OzFish,True,False,90
+Dascyllus trimaculatus,Pomacentridae,Dascyllus,186,,OzFish,True,False,91
+Carangoides caeruleopinnatus,Carangidae,Carangoides,186,,OzFish,True,False,92
+Carangoides ferdau,Carangidae,Carangoides,184,,OzFish,True,False,93
+Pristotis obtusirostris,Pomacentridae,Pristotis,184,,OzFish,True,False,94
+Scarus rubroviolaceus,Scaridae,Scarus,184,,OzFish,True,False,95
+Halichoeres nebulosus,Labridae,Halichoeres,182,,OzFish,True,False,96
+Lethrinus amboinensis,Lethrinidae,Lethrinus,180,,OzFish,True,False,97
+Halichoeres zeylonicus,Labridae,Halichoeres,178,,OzFish,True,False,98
+Pomacentrus vaiuli,Pomacentridae,Pomacentrus,176,,OzFish,True,False,99
+Scolopsis monogramma,Nemipteridae,Scolopsis,176,,OzFish,True,False,100
+Epinephelus bilobatus,Serranidae,Epinephelus,174,,OzFish,True,False,101
+Abudefduf bengalensis,Pomacentridae,Abudefduf,174,,OzFish,True,False,102
+Lethrinus ravus,Lethrinidae,Lethrinus,172,,OzFish,True,False,103
+Triaenodon obesus,Carcharhinidae,Triaenodon,165,,OzFish,True,False,104
+Lethrinus olivaceus,Lethrinidae,Lethrinus,164,Longface emperor,OzFish,True,False,105
+Symphorus nematophorus,Lutjanidae,Symphorus,159,,OzFish,True,False,106
+Choerodon schoenleinii,Labridae,Choerodon,159,,OzFish,True,False,107
+Gymnocranius grandoculis,Lethrinidae,Gymnocranius,156,,OzFish,True,False,108
+Sphyraena qenie,Sphyraenidae,Sphyraena,156,,OzFish,True,False,109
+Zebrasoma desjardinii,Acanthuridae,Zebrasoma,152,,OzFish,True,False,110
+Lutjanus erythropterus,Lutjanidae,Lutjanus,152,,OzFish,True,False,111
+Chromis atripectoralis,Pomacentridae,Chromis,152,,OzFish,True,False,112
+Naso thynnoides,Acanthuridae,Naso,152,,OzFish,True,False,113
+Acanthurus mata,Acanthuridae,Acanthurus,150,,OzFish,True,False,114
+Pterocaesio chrysozona,Caesionidae,Pterocaesio,148,Goldband fusilier,OzFish,True,False,115
+Stegastes fasciolatus,Pomacentridae,Stegastes,142,,OzFish,True,False,116
+Lutjanus fulviflamma,Lutjanidae,Lutjanus,140,Dory snapper,OzFish,True,False,117
+Parupeneus pleurostigma,Mullidae,Parupeneus,140,,OzFish,True,False,118
+Abudefduf vaigiensis,Pomacentridae,Abudefduf,140,,OzFish,True,False,119
+Leptojulis cyanopleura,Labridae,Leptojulis,136,,OzFish,True,False,120
+Chaetodon citrinellus,Chaetodontidae,Chaetodon,134,,OzFish,True,False,121
+Pentapodus emeryii,Nemipteridae,Pentapodus,132,,OzFish,True,False,122
+Stethojulis bandanensis,Labridae,Stethojulis,132,,OzFish,True,False,123
+Chaetodon trifascialis,Chaetodontidae,Chaetodon,130,,OzFish,True,False,124
+Kyphosus vaigiensis,Kyphosidae,Kyphosus,130,,OzFish,True,False,125
+Zanclus cornutus,Zanclidae,Zanclus,128,,OzFish,True,False,126
+Chaetodon ulietensis,Chaetodontidae,Chaetodon,128,,OzFish,True,False,127
+Lutjanus fulvus,Lutjanidae,Lutjanus,127,Blacktail snapper,OzFish,True,False,128
+Apolemichthys trimaculatus,Pomacanthidae,Apolemichthys,126,,OzFish,True,False,129
+Cirrhilabrus exquisitus,Labridae,Cirrhilabrus,126,,OzFish,True,False,130
+Lutjanus gibbus,Lutjanidae,Lutjanus,126,Humpback red snapper,OzFish,True,False,131
+Zebrasoma scopas,Acanthuridae,Zebrasoma,124,,OzFish,True,False,132
+Gomphosus varius,Labridae,Gomphosus,123,Birdwrasse,OzFish,True,False,133
+Chaetodon lunula,Chaetodontidae,Chaetodon,122,,OzFish,True,False,134
+Sphyraena obtusata,Sphyraenidae,Sphyraena,122,,OzFish,True,False,135
+Stegastes nigricans,Pomacentridae,Stegastes,120,,OzFish,True,False,136
+Diagramma pictum,Haemulidae,Diagramma,120,,OzFish,True,False,137
+Lutjanus rivulatus,Lutjanidae,Lutjanus,120,Blubberlip snapper,OzFish,True,False,138
+Cheilio inermis,Labridae,Cheilio,118,,OzFish,True,False,139
+Parupeneus heptacanthus,Mullidae,Parupeneus,118,,OzFish,True,False,140
+Melichthys vidua,Balistidae,Melichthys,118,,OzFish,True,False,141
+Pentapodus vitta,Nemipteridae,Pentapodus,118,,OzFish,True,False,142
+Oxycheilinus bimaculatus,Labridae,Oxycheilinus,116,,OzFish,True,False,143
+Pomacanthus semicirculatus,Pomacanthidae,Pomacanthus,116,,OzFish,True,False,144
+Cephalopholis argus,Serranidae,Cephalopholis,113,,OzFish,True,False,145
+Hemigymnus melapterus,Labridae,Hemigymnus,112,Blackeye thicklip,OzFish,True,False,146
+Cheilinus chlorourus,Labridae,Cheilinus,108,,OzFish,True,False,147
+Variola albimarginata,Serranidae,Variola,108,,OzFish,True,False,148
+Acanthurus leucocheilus,Acanthuridae,Acanthurus,106,,OzFish,True,False,149
+Scarus frenatus,Scaridae,Scarus,106,,OzFish,True,False,150
+Pomacanthus imperator,Pomacanthidae,Pomacanthus,106,,OzFish,True,False,151
+Rhinecanthus aculeatus,Balistidae,Rhinecanthus,106,,OzFish,True,False,152
+Fistularia commersonii,Fistulariidae,Fistularia,104,,OzFish,True,False,153
+Lethrinus genivittatus,Lethrinidae,Lethrinus,102,,OzFish,True,False,154
+Oxycheilinus rhodochrous,Labridae,Oxycheilinus,102,,OzFish,True,False,155
+Cheilinus trilobatus,Labridae,Cheilinus,101,,OzFish,True,False,156
+Acanthurus nigricans,Acanthuridae,Acanthurus,100,,OzFish,True,False,157
+Lethrinus miniatus,Lethrinidae,Lethrinus,100,Trumpet emperor,OzFish,True,False,158
+Variola louti,Serranidae,Variola,98,,OzFish,False,False,159
+Naso hexacanthus,Acanthuridae,Naso,96,,OzFish,False,False,160
+Stegastes obreptus,Pomacentridae,Stegastes,96,,OzFish,False,False,161
+Chaetodon kleinii,Chaetodontidae,Chaetodon,96,,OzFish,False,False,162
+Cephalopholis urodeta,Serranidae,Cephalopholis,96,,OzFish,False,False,163
+Siganus doliatus,Siganidae,Siganus,93,,OzFish,False,False,164
+Centropyge tibicen,Pomacanthidae,Centropyge,92,,OzFish,False,False,165
+Bodianus axillaris,Labridae,Bodianus,91,,OzFish,False,False,166
+Gnathodentex aureolineatus,Lethrinidae,Gnathodentex,91,,OzFish,False,False,167
+Chromis nigrura,Pomacentridae,Chromis,90,,OzFish,False,False,168
+Chromis cinerascens,Pomacentridae,Chromis,88,,OzFish,False,False,169
+Heniochus acuminatus,Chaetodontidae,Heniochus,88,,OzFish,False,False,170
+Choerodon jordani,Labridae,Choerodon,88,,OzFish,False,False,171
+Seriolina nigrofasciata,Carangidae,Seriolina,88,,OzFish,False,False,172
+Chaetodontoplus personifer,Pomacanthidae,Chaetodontoplus,87,,OzFish,False,False,173
+Lutjanus lemniscatus,Lutjanidae,Lutjanus,86,Yellowstreaked snapper,OzFish,False,False,174
+Naso vlamingii,Acanthuridae,Naso,86,Bignose unicornfish,OzFish,False,False,175
+Lethrinus obsoletus,Lethrinidae,Lethrinus,85,,OzFish,False,False,176
+Labroides bicolor,Labridae,Labroides,84,,OzFish,False,False,177
+Acanthurus xanthopterus,Acanthuridae,Acanthurus,82,,OzFish,False,False,178
+Chaetodontoplus duboulayi,Pomacanthidae,Chaetodontoplus,82,,OzFish,False,False,179
+Chaetodon unimaculatus,Chaetodontidae,Chaetodon,82,,OzFish,False,False,180
+Naso reticulatus,Acanthuridae,Naso,80,,OzFish,False,False,181
+Cirrhilabrus randalli,Labridae,Cirrhilabrus,80,,OzFish,False,False,182
+Lutjanus quinquelineatus,Lutjanidae,Lutjanus,80,Five-lined snapper,OzFish,False,False,183
+Scarus chameleon,Scaridae,Scarus,78,,OzFish,False,False,184
+Coris dorsomacula,Labridae,Coris,78,,OzFish,False,False,185
+Elagatis bipinnulata,Carangidae,Elagatis,76,,OzFish,False,False,186
+Upeneus tragula,Mullidae,Upeneus,76,,OzFish,False,False,187
+Epinephelus tauvina,Serranidae,Epinephelus,76,,OzFish,False,False,188
+Amblyglyphidodon aureus,Pomacentridae,Amblyglyphidodon,75,,OzFish,False,False,189
+Chaetodon aureofasciatus,Chaetodontidae,Chaetodon,74,,OzFish,False,False,190
+Lutjanus monostigma,Lutjanidae,Lutjanus,72,One-spot snapper,OzFish,False,False,191
+Pseudobalistes fuscus,Balistidae,Pseudobalistes,71,,OzFish,False,False,192
+Dischistodus prosopotaenia,Pomacentridae,Dischistodus,70,,OzFish,False,False,193
+Pseudanthias cooperi,Serranidae,Pseudanthias,70,,OzFish,False,False,194
+Cheilinus fasciatus,Labridae,Cheilinus,70,,OzFish,False,False,195
+Chelmon marginalis,Chaetodontidae,Chelmon,70,,OzFish,False,False,196
+Lethrinus laticaudis,Lethrinidae,Lethrinus,70,Grass emperor,OzFish,False,False,197
+Chanos chanos,Chanidae,Chanos,70,,OzFish,False,False,198
+Chaetodon ephippium,Chaetodontidae,Chaetodon,70,,OzFish,False,False,199
+Cyprinocirrhites polyactis,Cirrhitidae,Cyprinocirrhites,69,,OzFish,False,False,200
+Naso fageni,Acanthuridae,Naso,68,,OzFish,False,False,201
+Dascyllus reticulatus,Pomacentridae,Dascyllus,68,Reticulate dascyllus,OzFish,False,False,202
+Thalassoma hardwicke,Labridae,Thalassoma,66,Sixbar wrasse,OzFish,False,False,203
+Aphareus furca,Lutjanidae,Aphareus,64,,OzFish,False,False,204
+Plectropomus areolatus,Serranidae,Plectropomus,64,,OzFish,False,False,205
+Malacanthus brevirostris,Malacanthidae,Malacanthus,64,,OzFish,False,False,206
+Epinephelus polyphekadion,Serranidae,Epinephelus,62,,OzFish,False,False,207
+Neopomacentrus filamentosus,Pomacentridae,Neopomacentrus,62,,OzFish,False,False,208
+Naso brachycentron,Acanthuridae,Naso,62,,OzFish,False,False,209
+Argyrops spinifer,Sparidae,Argyrops,62,,OzFish,False,False,210
+Aprion virescens,Lutjanidae,Aprion,61,,OzFish,False,False,211
+Pomacentrus nagasakiensis,Pomacentridae,Pomacentrus,60,,OzFish,False,False,212
+Balistapus undulatus,Balistidae,Balistapus,60,,OzFish,False,False,213
+Chlorurus strongylocephalus,Scaridae,Chlorurus,60,,OzFish,False,False,214
+Siganus trispilos,Siganidae,Siganus,58,,OzFish,False,False,215
+Parapercis nebulosa,Pinguipedidae,Parapercis,58,,OzFish,False,False,216
+Scomberoides lysan,Carangidae,Scomberoides,58,,OzFish,False,False,217
+Epibulus insidiator,Labridae,Epibulus,57,,OzFish,False,False,218
+Scarus oviceps,Scaridae,Scarus,56,,OzFish,False,False,219
+Caranx ignobilis,Carangidae,Caranx,56,Giant trevally,OzFish,False,False,220
+Chaetodon trifasciatus,Chaetodontidae,Chaetodon,56,,OzFish,False,False,221
+Cantherhines pardalis,Monacanthidae,Cantherhines,56,,OzFish,False,False,222
+Caranx papuensis,Carangidae,Caranx,56,Brassy trevally,OzFish,False,False,223
+Hologymnosus doliatus,Labridae,Hologymnosus,54,,OzFish,False,False,224
+Abalistes filamentosus,Balistidae,Abalistes,54,,OzFish,False,False,225
+Plectorhinchus multivittatus,Haemulidae,Plectorhinchus,54,,OzFish,False,False,226
+Lethrinus microdon,Lethrinidae,Lethrinus,54,,OzFish,False,False,227
+Monotaxis grandoculis,Lethrinidae,Monotaxis,52,,OzFish,False,False,228
+Anampses geographicus,Labridae,Anampses,52,,OzFish,False,False,229
+Acanthurus nigricauda,Acanthuridae,Acanthurus,52,Epaulette surgeonfish,OzFish,False,False,230
+Anampses lennardi,Labridae,Anampses,52,,OzFish,False,False,231
+Chaetodon lineolatus,Chaetodontidae,Chaetodon,52,,OzFish,False,False,232
+Paracirrhites forsteri,Cirrhitidae,Paracirrhites,51,,OzFish,False,False,233
+Parupeneus trifasciatus,Mullidae,Parupeneus,49,,OzFish,False,False,234
+Cephalopholis miniata,Serranidae,Cephalopholis,48,,OzFish,False,False,235
+Pomacentrus milleri,Pomacentridae,Pomacentrus,46,,OzFish,False,False,236
+Halichoeres claudia,Labridae,Halichoeres,46,,OzFish,False,False,237
+Chromis opercularis,Pomacentridae,Chromis,46,,OzFish,False,False,238
+Mulloidichthys vanicolensis,Mullidae,Mulloidichthys,46,Yellowfin goatfish,OzFish,False,False,239
+Carangoides chrysophrys,Carangidae,Carangoides,46,,OzFish,False,False,240
+Hipposcarus harid,Scaridae,Hipposcarus,46,,OzFish,False,False,241
+Oxycheilinus digrammus,Labridae,Oxycheilinus,46,,OzFish,False,False,242
+Chaetodon lunulatus,Chaetodontidae,Chaetodon,45,Oval butterflyfish,OzFish,False,False,243
+Coris pictoides,Labridae,Coris,44,,OzFish,False,False,244
+Pseudocheilinus evanidus,Labridae,Pseudocheilinus,44,,OzFish,False,False,245
+Sphyraena forsteri,Sphyraenidae,Sphyraena,44,,OzFish,False,False,246
+Choerodon vitta,Labridae,Choerodon,44,,OzFish,False,False,247
+Halichoeres nigrescens,Labridae,Halichoeres,44,,OzFish,False,False,248
+Zebrasoma veliferum,Acanthuridae,Zebrasoma,44,,OzFish,False,False,249
+Neoglyphidodon melas,Pomacentridae,Neoglyphidodon,42,,OzFish,False,False,250
+Halichoeres melanochir,Labridae,Halichoeres,42,,OzFish,False,False,251
+Uraspis secunda,Carangidae,Uraspis,40,,OzFish,False,False,252
+Gunnellichthys pleurotaenia,Microdesmidae,Gunnellichthys,40,,OzFish,False,False,253
+Sufflamen bursa,Balistidae,Sufflamen,40,,OzFish,False,False,254
+Siganus puellus,Siganidae,Siganus,40,Decorated rabbitfish,OzFish,False,False,255
+Parupeneus barberinus,Mullidae,Parupeneus,40,,OzFish,False,False,256
+Siganus punctatus,Siganidae,Siganus,38,,OzFish,False,False,257
+Epinephelus fuscoguttatus,Serranidae,Epinephelus,38,,OzFish,False,False,258
+Hemigymnus fasciatus,Labridae,Hemigymnus,37,Barred thicklip,OzFish,False,False,259
+Pterocaesio tile,Caesionidae,pterocaesio,36,Dark-banded fusilier,OzFish,False,False,260
+Chlorurus microrhinos,Scaridae,Chlorurus,36,,OzFish,False,False,261
+Macolor niger,Lutjanidae,Macolor,36,,OzFish,False,False,262
+Crenimugil crenilabis,Mugilidae,Crenimugil,36,,OzFish,False,False,263
+Sphyraena barracuda,Sphyraenidae,Sphyraena,34,,OzFish,False,False,264
+Loxodon macrorhinus,Carcharhinidae,Loxodon,34,,OzFish,False,False,265
+Labracinus lineatus,Pseudochromidae,Labracinus,34,,OzFish,False,False,266
+Labrichthys unilineatus,Labridae,Labrichthys,33,,OzFish,False,False,267
+Caesio caerulaurea,Caesionidae,Caesio,32,,OzFish,False,False,268
+Decapterus muroadsi,Carangidae,Decapterus,32,,OzFish,False,False,269
+Chromis amboinensis,Pomacentridae,Chromis,32,,OzFish,False,False,270
+Oxycheilinus unifasciatus,Labridae,Oxycheilinus,32,,OzFish,False,False,271
+Anampses meleagrides,Labridae,Anampses,32,,OzFish,False,False,272
+Naso elegans,Acanthuridae,Naso,32,,OzFish,False,False,273
+Macolor macularis,Lutjanidae,Macolor,31,,OzFish,False,False,274
+Aethaloperca rogaa,Serranidae,Aethaloperca,30,,OzFish,False,False,275
+Hipposcarus longiceps,Scaridae,Hipposcarus,30,,OzFish,False,False,276
+Bodianus bilunulatus,Labridae,Bodianus,30,,OzFish,False,False,277
+Lethrinus erythropterus,Lethrinidae,Lethrinus,30,Longfin emperor,OzFish,False,False,278
+Chaetodon ornatissimus,Chaetodontidae,Chaetodon,30,,OzFish,False,False,279
+Pseudobalistes flavimarginatus,Balistidae,Pseudobalistes,28,,OzFish,False,False,280
+Aulostomus chinensis,Aulostomidae,Aulostomus,28,,OzFish,False,False,281
+Kyphosus cinerascens,Kyphosidae,Kyphosus,28,,OzFish,False,False,282
+Chaetodon punctatofasciatus,Chaetodontidae,Chaetodon,28,,OzFish,False,False,283
+Choerodon rubescens,Labridae,Choerodon,28,,OzFish,False,False,284
+Decapterus macarellus,Carangidae,Decapterus,28,,OzFish,False,False,285
+Heniochus singularius,Chaetodontidae,Heniochus,26,,OzFish,False,False,286
+Parachaetodon ocellatus,Chaetodontidae,Parachaetodon,26,,OzFish,False,False,287
+Coris gaimard,Labridae,Coris,26,African coris,OzFish,False,False,288
+Scarus psittacus,Scaridae,Scarus,26,,OzFish,False,False,289
+Pseudochromis fuscus,Pseudochromidae,Pseudochromis,26,,OzFish,False,False,290
+Torquigener pallimaculatus,Tetraodontidae,Torquigener,26,,OzFish,False,False,291
+Pseudodax moluccanus,Labridae,Pseudodax,26,,OzFish,False,False,292
+Parapercis multiplicata,Pinguipedidae,Parapercis,24,,OzFish,False,False,293
+Rachycentron canadum,Rachycentridae,Rachycentron,24,,OzFish,False,False,294
+Parupeneus chrysopleuron,Mullidae,Parupeneus,24,,OzFish,False,False,295
+Feroxodon multistriatus,Tetraodontidae,Feroxodon,24,,OzFish,False,False,296
+Pomacentrus moluccensis,Pomacentridae,Pomacentrus,24,Lemon damsel,OzFish,False,False,297
+Calotomus carolinus,Scaridae,Calotomus,24,,OzFish,False,False,298
+Naso caesius,Acanthuridae,Naso,24,,OzFish,False,False,299
+Balistoides viridescens,Balistidae,Balistoides,24,Titan triggerfish,OzFish,False,False,300
+Paracirrhites arcatus,Cirrhitidae,Paracirrhites,23,,OzFish,False,False,301
+Iniistius pavo,Labridae,Iniistius,22,,OzFish,False,False,302
+Gracila albomarginata,Serranidae,Gracila,22,,OzFish,False,False,303
+Tylosurus crocodilus,Belonidae,Tylosurus,22,,OzFish,False,False,304
+Naso lopezi,Acanthuridae,Naso,22,,OzFish,False,False,305
+Centropyge bicolor,Pomacanthidae,Centropyge,22,,OzFish,False,False,306
+Aluterus scriptus,Monacanthidae,Aluterus,22,,OzFish,False,False,307
+Novaculichthys taeniourus,Labridae,Novaculichthys,22,,OzFish,False,False,308
+Hologymnosus rhodonotus,Labridae,Hologymnosus,22,,OzFish,False,False,309
+Plagiotremus rhinorhynchos,Blenniidae,Plagiotremus,22,,OzFish,False,False,310
+Lagocephalus lunaris,Tetraodontidae,Lagocephalus,22,,OzFish,False,False,311
+Choerodon cephalotes,Labridae,Choerodon,22,,OzFish,False,False,312
+Scarus forsteni,Scaridae,Scarus,22,,OzFish,False,False,313
+Epinephelus merra,Serranidae,Epinephelus,21,,OzFish,False,False,314
+Carcharhinus plumbeus,Carcharhinidae,Carcharhinus,20,,OzFish,False,False,315
+Rhynchobatus australiae,Rhynchobatidae,Rhynchobatus,20,,OzFish,False,False,316
+Monacanthus chinensis,Monacanthidae,Monacanthus,20,,OzFish,False,False,317
+Ostorhinchus aureus,Apogonidae,Ostorhinchus,20,,OzFish,False,False,318
+Ostracion cubicus,Ostraciidae,Ostracion,20,,OzFish,False,False,319
+Thalassoma quinquevittatum,Labridae,Thalassoma,20,,OzFish,False,False,320
+Coradion chrysozonus,Chaetodontidae,Coradion,20,,OzFish,False,False,321
+Pseudanthias evansi,Serranidae,Pseudanthias,20,,OzFish,False,False,322
+Ptereleotris monoptera,Microdesmidae,Ptereleotris,20,,OzFish,False,False,323
+Coris auricularis,Labridae,Coris,20,,OzFish,False,False,324
+Chrysiptera glauca,Pomacentridae,Chrysiptera,20,,OzFish,False,False,325
+Parapercis xanthozona,Pinguipedidae,Parapercis,20,,OzFish,False,False,326
+Paramonacanthus choirocephalus,Monacanthidae,Paramonacanthus,20,,OzFish,False,False,327
+Cheilinus undulatus,Labridae,Cheilinus,20,,OzFish,False,False,328
+Cantherhines dumerilii,Monacanthidae,Cantherhines,20,,OzFish,False,False,329
+Rhinecanthus rectangulus,Balistidae,Rhinecanthus,18,,OzFish,False,False,330
+Plectroglyphidodon lacrymatus,Pomacentridae,Plectroglyphidodon,18,,OzFish,False,False,331
+Hemitaurichthys polylepis,Chaetodontidae,Hemitaurichthys,18,,OzFish,False,False,332
+Pomacanthus sexstriatus,Pomacanthidae,Pomacanthus,18,,OzFish,False,False,333
+Forcipiger flavissimus,Chaetodontidae,Forcipiger,18,,OzFish,False,False,334
+Galeocerdo cuvier,Carcharhinidae,Galeocerdo,18,,OzFish,False,False,335
+Anampses caeruleopunctatus,Labridae,Anampses,18,,OzFish,False,False,336
+Macropharyngodon negrosensis,Labridae,Macropharyngodon,18,,OzFish,False,False,337
+Aluterus monoceros,Monacanthidae,Aluterus,18,,OzFish,False,False,338
+Lutjanus malabaricus,Lutjanidae,Lutjanus,18,Malabar blood snapper,OzFish,False,False,339
+Meiacanthus grammistes,Blenniidae,Meiacanthus,18,,OzFish,False,False,340
+Arothron hispidus,Tetraodontidae,Arothron,18,,OzFish,False,False,341
+Kyphosus bigibbus,Kyphosidae,Kyphosus,18,,OzFish,False,False,342
+Lethrinus lentjan,Lethrinidae,Lethrinus,18,Pink ear emperor,OzFish,False,False,343
+Lethrinus erythracanthus,Lethrinidae,Lethrinus,18,,OzFish,False,False,344
+Acanthurus nigrofuscus,Acanthuridae,Acanthurus,16,,OzFish,False,False,345
+Acanthurus pyroferus,Acanthuridae,Acanthurus,16,,OzFish,False,False,346
+Genicanthus lamarck,Pomacanthidae,Genicanthus,16,,OzFish,False,False,347
+Epinephelus coioides,Serranidae,Epinephelus,16,Orange-spotted grouper,OzFish,False,False,348
+Oxymonacanthus longirostris,Monacanthidae,Oxymonacanthus,16,,OzFish,False,False,349
+Lutjanus russellii,Lutjanidae,Lutjanus,16,,OzFish,False,False,350
+Neotrygon kuhlii,Dasyatidae,Neotrygon,16,,OzFish,False,False,351
+Negaprion acutidens,Carcharhinidae,Negaprion,16,,OzFish,False,False,352
+Chaetodon guttatissimus,Chaetodontidae,Chaetodon,16,,OzFish,False,False,353
+Lethrinus harak,Lethrinidae,Lethrinus,16,,OzFish,False,False,354
+Chaetodon meyeri,Chaetodontidae,Chaetodon,16,,OzFish,False,False,355
+Cephalopholis sonnerati,Serranidae,Cephalopholis,16,,OzFish,False,False,356
+Cirrhilabrus punctatus,Labridae,Cirrhilabrus,15,,OzFish,False,False,357
+Gerres longirostris,Gerreidae,Gerres,14,,OzFish,False,False,358
+Thalassoma jansenii,Labridae,Thalassoma,14,,OzFish,False,False,359
+Ptereleotris microlepis,Microdesmidae,Ptereleotris,14,,OzFish,False,False,360
+Epinephelus spilotoceps,Serranidae,Epinephelus,14,,OzFish,False,False,361
+Chrysiptera biocellata,Pomacentridae,Chrysiptera,14,,OzFish,False,False,362
+Chaetodon speculum,Chaetodontidae,Chaetodon,14,,OzFish,False,False,363
+Labropsis australis,Labridae,Labropsis,14,,OzFish,False,False,364
+Carangoides plagiotaenia,Carangidae,Carangoides,14,,OzFish,False,False,365
+Lethrinus xanthochilus,Lethrinidae,Lethrinus,14,,OzFish,False,False,366
+Hyporhamphus dussumieri,Hemiramphidae,Hyporhamphus,14,,OzFish,False,False,367
+Platax teira,Ephippidae,Platax,14,,OzFish,False,False,368
+Plectroglyphidodon dickii,Pomacentridae,Plectroglyphidodon,14,,OzFish,False,False,369
+Suezichthys cyanolaemus,Labridae,Suezichthys,14,,OzFish,False,False,370
+Amblypomacentrus breviceps,Pomacentridae,Amblypomacentrus,14,,OzFish,False,False,371
+Bolbometopon muricatum,Scaridae,Bolbometopon,14,,OzFish,False,False,372
+Forcipiger longirostris,Chaetodontidae,Forcipiger,13,,OzFish,False,False,373
+Naso maculatus,Acanthuridae,Naso,12,,OzFish,False,False,374
+Paraplotosus butleri,Plotosidae,Paraplotosus,12,,OzFish,False,False,375
+Parupeneus macronemus,Mullidae,Parupeneus,12,,OzFish,False,False,376
+Iniistius aneitensis,Labridae,Iniistius,12,,OzFish,False,False,377
+Pentapodus aureofasciatus,Nemipteridae,Pentapodus,12,,OzFish,False,False,378
+Priacanthus hamrur,Priacanthidae,Priacanthus,12,,OzFish,False,False,379
+Plotosus lineatus,Plotosidae,Plotosus,12,,OzFish,False,False,380
+Plectorhinchus picus,Haemulidae,Plectorhinchus,12,,OzFish,False,False,381
+Chaetodon adiergastos,Chaetodontidae,Chaetodon,12,,OzFish,False,False,382
+Anampses melanurus,Labridae,Anampses,12,,OzFish,False,False,383
+Arothron caeruleopunctatus,Tetraodontidae,Arothron,12,,OzFish,False,False,384
+Chaetodon melannotus,Chaetodontidae,Chaetodon,12,,OzFish,False,False,385
+Epinephelus malabaricus,Serranidae,Epinephelus,12,Malabar grouper,OzFish,False,False,386
+Plectorhinchus unicolor,Haemulidae,Plectorhinchus,12,,OzFish,False,False,387
+Macropharyngodon meleagris,Labridae,Macropharyngodon,12,,OzFish,False,False,388
+Gymnosarda unicolor,Scombridae,Gymnosarda,12,,OzFish,False,False,389
+Pervagor janthinosoma,Monacanthidae,Pervagor,10,,OzFish,False,False,390
+Pempheris adusta,Pempherididae,Pempheris,10,,OzFish,False,False,391
+Leptojulis chrysotaenia,Labridae,Leptojulis,10,,OzFish,False,False,392
+Plectorhinchus vittatus,Haemulidae,Plectorhinchus,10,,OzFish,False,False,393
+Scaevius milii,Nemipteridae,Scaevius,10,,OzFish,False,False,394
+Priacanthus blochii,Priacanthidae,Priacanthus,10,,OzFish,False,False,395
+Epinephelus quoyanus,Serranidae,Epinephelus,10,,OzFish,False,False,396
+Sargocentron spiniferum,Holocentridae,Sargocentron,10,,OzFish,False,False,397
+Valenciennea muralis,Gobiidae,Valenciennea,10,,OzFish,False,False,398
+Platax batavianus,Ephippidae,Platax,10,,OzFish,False,False,399
+Pteragogus flagellifer,Labridae,Pteragogus,10,,OzFish,False,False,400
+Stethojulis interrupta,Labridae,Stethojulis,10,,OzFish,False,False,401
+Anyperodon leucogrammicus,Serranidae,Anyperodon,10,,OzFish,False,False,402
+Diploprion bifasciatum,Grammistidae,Diploprion,10,,OzFish,False,False,403
+Cirrhitichthys falco,Cirrhitidae,Cirrhitichthys,10,,OzFish,False,False,404
+Carcharhinus albimarginatus,Carcharhinidae,Carcharhinus,10,,OzFish,False,False,405
+Scolopsis lineata,Nemipteridae,Scolopsis,10,,OzFish,False,False,406
+Scarus niger,Scaridae,Scarus,10,Swarthy parrotfish,OzFish,False,False,407
+Chaetodon bennetti,Chaetodontidae,Chaetodon,10,,OzFish,False,False,408
+Ostracion meleagris,Ostraciidae,Ostracion,10,,OzFish,False,False,409
+Pempheris oualensis,Pempherididae,Pempheris,10,,OzFish,False,False,410
+Pomacentrus nigromanus,Pomacentridae,Pomacentrus,8,,OzFish,False,False,411
+Glaucostegus typus,Rhinobatidae,Glaucostegus,8,,OzFish,False,False,412
+Plectroglyphidodon johnstonianus,Pomacentridae,Plectroglyphidodon,8,,OzFish,False,False,413
+Halichoeres marginatus,Labridae,Halichoeres,8,,OzFish,False,False,414
+Seriola rivoliana,Carangidae,Seriola,8,,OzFish,False,False,415
+Taeniura lymma,Dasyatidae,Taeniura,8,,OzFish,False,False,416
+Nebrius ferrugineus,Ginglymostomatidae,Nebrius,8,,OzFish,False,False,417
+Valenciennea strigata,Gobiidae,Valenciennea,8,,OzFish,False,False,418
+Amphiprion clarkii,Pomacentridae,Amphiprion,8,,OzFish,False,False,419
+Canthigaster rivulata,Tetraodontidae,Canthigaster,8,,OzFish,False,False,420
+Carangoides hedlandensis,Carangidae,Carangoides,8,,OzFish,False,False,421
+Siganus stellatus,Siganidae,Siganus,8,,OzFish,False,False,422
+Scolopsis affinis,Nemipteridae,Scolopsis,8,,OzFish,False,False,423
+Scomberoides commersonnianus,Carangidae,Scomberoides,8,,OzFish,False,False,424
+Epinephelus faveatus,Serranidae,Epinephelus,7,,OzFish,False,False,425
+Labroides pectoralis,Labridae,Labroides,6,,OzFish,False,False,426
+Lutjanus kasmira,Lutjanidae,Lutjanus,6,Common bluestripe snapper,OzFish,False,False,427
+Neopomacentrus azysron,Pomacentridae,Neopomacentrus,6,,OzFish,False,False,428
+Naso mcdadei,Acanthuridae,Naso,6,,OzFish,False,False,429
+Acanthurus unicornis,Acanthuridae,Acanthurus,6,,OzFish,False,False,430
+Labropsis xanthonota,Labridae,Labropsis,6,,OzFish,False,False,431
+Eubalichthys caeruleoguttatus,Monacanthidae,Eubalichthys,6,,OzFish,False,False,432
+Taeniurops meyeni,Dasyatidae,Taeniurops,6,,OzFish,False,False,433
+Centropyge flavissima,Pomacanthidae,Centropyge,6,,OzFish,False,False,434
+Scarus xanthopleura,Scaridae,Scarus,6,,OzFish,False,False,435
+Selar boops,Carangidae,Selar,6,,OzFish,False,False,436
+Caranx lugubris,Carangidae,Caranx,6,,OzFish,False,False,437
+Stethojulis strigiventer,Labridae,Stethojulis,6,,OzFish,False,False,438
+Plectorhinchus chaetodonoides,Haemulidae,Plectorhinchus,6,,OzFish,False,False,439
+Canthigaster axiologus,Tetraodontidae,Canthigaster,6,,OzFish,False,False,440
+Ptereleotris evides,Microdesmidae,Ptereleotris,6,,OzFish,False,False,441
+Cirrhitichthys aprinus,Cirrhitidae,Cirrhitichthys,6,,OzFish,False,False,442
+Epinephelus hexagonatus,Serranidae,Epinephelus,6,,OzFish,False,False,443
+Gunnellichthys curiosus,Microdesmidae,Gunnellichthys,6,,OzFish,False,False,444
+Epinephelus maculatus,Serranidae,Epinephelus,6,,OzFish,False,False,445
+Chiloscyllium punctatum,Hemiscylliidae,Chiloscyllium,6,,OzFish,False,False,446
+Plectorhinchus flavomaculatus,Haemulidae,Plectorhinchus,6,,OzFish,False,False,447
+Chlorurus bleekeri,Scaridae,Chlorurus,6,,OzFish,False,False,448
+Plagiotremus tapeinosoma,Blenniidae,Plagiotremus,6,,OzFish,False,False,449
+Himantura fai,Dasyatidae,Himantura,6,,OzFish,False,False,450
+Heniochus monoceros,Chaetodontidae,Heniochus,6,,OzFish,False,False,451
+Hoplolatilus cuniculus,Malacanthidae,Hoplolatilus,4,,OzFish,False,False,452
+Hemipristis elongata,Hemigaleidae,Hemipristis,4,,OzFish,False,False,453
+Malacanthus latovittatus,Malacanthidae,Malacanthus,4,,OzFish,False,False,454
+Paracirrhites hemistictus,Cirrhitidae,Paracirrhites,4,,OzFish,False,False,455
+Acanthurus bariene,Acanthuridae,Acanthurus,4,,OzFish,False,False,456
+Sufflamen chrysopterus,Balistidae,Sufflamen,4,,OzFish,False,False,457
+Balistoides conspicillum,Balistidae,Balistoides,4,,OzFish,False,False,458
+Amblyglyphidodon curacao,Pomacentridae,Amblyglyphidodon,4,,OzFish,False,False,459
+Symphorichthys spilurus,Lutjanidae,Symphorichthys,4,,OzFish,False,False,460
+Trachinotus baillonii,Carangidae,Trachinotus,4,,OzFish,False,False,461
+Stegostoma fasciatum,Stegostomatidae,Stegostoma,4,,OzFish,False,False,462
+Terapon jarbua,Terapontidae,Terapon,4,,OzFish,False,False,463
+Carcharhinus coatesi,Carcharhinidae,Carcharhinus,4,,OzFish,False,False,464
+Epinephelus corallicola,Serranidae,Epinephelus,4,,OzFish,False,False,465
+Chaetodon selene,Chaetodontidae,Chaetodon,4,,OzFish,False,False,466
+Chaetodermis penicilligerus,Monacanthidae,Chaetodermis,4,,OzFish,False,False,467
+Cantherhines fronticinctus,Monacanthidae,Cantherhines,4,,OzFish,False,False,468
+Chaetodon madagaskariensis,Chaetodontidae,Chaetodon,4,,OzFish,False,False,469
+Cheilinus oxycephalus,Labridae,Cheilinus,4,,OzFish,False,False,470
+Centropyge vrolikii,Pomacanthidae,Centropyge,4,,OzFish,False,False,471
+Gymnothorax thrysoideus,Muraenidae,Gymnothorax,4,,OzFish,False,False,472
+Halichoeres chrysus,Labridae,Halichoeres,4,,OzFish,False,False,473
+Halichoeres chloropterus,Labridae,Halichoeres,4,,OzFish,False,False,474
+Halichoeres biocellatus,Labridae,Halichoeres,4,,OzFish,False,False,475
+Cirrhitichthys oxycephalus,Cirrhitidae,Cirrhitichthys,4,,OzFish,False,False,476
+Diodon hystrix,Diodontidae,Diodon,4,,OzFish,False,False,477
+Ctenochaetus binotatus,Acanthuridae,Ctenochaetus,4,,OzFish,False,False,478
+Glaucosoma magnificum,Glaucosomatidae,Glaucosoma,4,,OzFish,False,False,479
+Naso tonganus,Acanthuridae,Naso,4,,OzFish,False,False,480
+Neotrygon leylandi,Dasyatidae,Neotrygon,2,,OzFish,False,False,481
+Xanthichthys auromarginatus,Balistidae,Xanthichthys,2,,OzFish,False,False,482
+Upeneus moluccensis,Mullidae,Upeneus,2,,OzFish,False,False,483
+Upeneus sundaicus,Mullidae,Upeneus,2,,OzFish,False,False,484
+Acanthurus fowleri,Acanthuridae,Acanthurus,2,,OzFish,False,False,485
+Aetobatus ocellatus,Myliobatidae,Aetobatus,2,,OzFish,False,False,486
+Acanthurus thompsoni,Acanthuridae,Acanthurus,2,Thompson's surgeonfish,OzFish,False,False,487
+Neoglyphidodon nigroris,Pomacentridae,Neoglyphidodon,2,,OzFish,False,False,488
+Himantura granulata,Dasyatidae,Himantura,2,,OzFish,False,False,489
+Hemitriakis falcata,Triakidae,Hemitriakis,2,,OzFish,False,False,490
+Leptoscarus vaigiensis,Scaridae,Leptoscarus,2,,OzFish,False,False,491
+Parapercis queenslandica,Pinguipedidae,Parapercis,2,,OzFish,False,False,492
+Parupeneus crassilabris,Mullidae,Parupeneus,2,,OzFish,False,False,493
+Parastromateus niger,Carangidae,Parastromateus,2,,OzFish,False,False,494
+Lutjanus decussatus,Lutjanidae,Lutjanus,2,Checkered snapper,OzFish,False,False,495
+Myripristis kuntee,Holocentridae,Myripristis,2,,OzFish,False,False,496
+Parapercis haackei,Pinguipedidae,Parapercis,2,,OzFish,False,False,497
+Meiacanthus luteus,Blenniidae,Meiacanthus,2,,OzFish,False,False,498
+Melichthys indicus,Balistidae,Melichthys,2,,OzFish,False,False,499
+Lethrinus semicinctus,Lethrinidae,Lethrinus,2,,OzFish,False,False,500
+Tylosurus gavialoides,Belonidae,Tylosurus,2,,OzFish,False,False,501
+Ostorhinchus rueppellii,Apogonidae,Ostorhinchus,2,,OzFish,False,False,502
+Netuma thalassina,Ariidae,Netuma,2,,OzFish,False,False,503
+Sargocentron caudimaculatum,Holocentridae,Sargocentron,2,,OzFish,False,False,504
+Pseudocheilinus hexataenia,Labridae,Pseudocheilinus,2,,OzFish,False,False,505
+Ptereleotris grammica,Microdesmidae,Ptereleotris,2,,OzFish,False,False,506
+Plectorhinchus gibbosus,Haemulidae,Plectorhinchus,2,,OzFish,False,False,507
+Plectroglyphidodon leucozonus,Pomacentridae,Plectroglyphidodon,2,,OzFish,False,False,508
+Plectropomus leopardus,Serranidae,Plectropomus,2,,OzFish,False,False,509
+Psammoperca waigiensis,Latidae,Psammoperca,2,,OzFish,False,False,510
+Epinephelus faveatus,Percichthyidae,Epinephelus,2,,OzFish,False,False,511
+Epinephelus lanceolatus,Serranidae,Epinephelus,2,,OzFish,False,False,512
+Chromis fieldi,Pomacentridae,Chromis,2,,OzFish,False,False,513
+Pseudocheilinus octotaenia,Labridae,Pseudocheilinus,2,,OzFish,False,False,514
+Epinephelus macrospilos,Serranidae,Epinephelus,2,,OzFish,False,False,515
+Decapterus russelli,Carangidae,Decapterus,2,,OzFish,False,False,516
+Ptereleotris heteroptera,Microdesmidae,Ptereleotris,2,,OzFish,False,False,517
+Ecsenius bicolor,Blenniidae,Ecsenius,2,,OzFish,False,False,518
+Elops hawaiensis,Elopidae,Elops,2,,OzFish,False,False,519
+Epinephalis tauvina,Serranidae,Epinephalis,2,,OzFish,False,False,520
+Chromileptes altivelis,Serranidae,Chromileptes,2,,OzFish,False,False,521
+Chilomycterus reticulatus,Diodontidae,Chilomycterus,2,,OzFish,False,False,522
+Sargocentron rubrum,Holocentridae,Sargocentron,2,,OzFish,False,False,523
+Sargocentron tiere,Holocentridae,Sargocentron,2,,OzFish,False,False,524
+Chromis ternatensis,Pomacentridae,Chromis,2,,OzFish,False,False,525
+Pygoplites diacanthus,Pomacanthidae,Pygoplites,2,,OzFish,False,False,526
+Sarda orientalis,Scombridae,Sarda,2,,OzFish,False,False,527
+Canthigaster coronata,Tetraodontidae,Canthigaster,2,,OzFish,False,False,528
+Cheilodipterus macrodon,Apogonidae,Cheilodipterus,2,,OzFish,False,False,529
+Bodianus mesothorax,Labridae,Bodianus,2,,OzFish,False,False,530
+Siganus punctatissimus,Siganidae,Siganus,2,,OzFish,False,False,531
+Carcharhinus brevipinna,Carcharhinidae,Carcharhinus,2,,OzFish,False,False,532
+Chaetodon oxycephalus,Chaetodontidae,Chaetodon,2,,OzFish,False,False,533
+Scarus scaber,Scaridae,Scarus,2,,OzFish,False,False,534
+Cephalopholis nigripinnis,Serranidae,Cephalopholis,2,,OzFish,False,False,535
+Cephalopholis spiloparaea,Serranidae,Cephalopholis,2,,OzFish,False,False,536
+Balistes viridescens,Balistidae,Balistes,2,,OzFish,False,False,537
+Aspidontus taeniatus,Blenniidae,Aspidontus,2,,OzFish,False,False,538
+Arothron stellatus,Tetraodontidae,Arothron,2,,OzFish,False,False,539
+Aprion viriscens,Lutjanidae,Aprion,2,,OzFish,False,False,540
+Aphareus rutilans,Lutjanidae,Aphareus,2,,OzFish,False,False,541
+Apogon doederleini,Apogonidae,Apogon,2,,OzFish,False,False,542
+Canthigaster valentini,Tetraodontidae,Canthigaster,2,,OzFish,False,False,543
+Stegastes insularis,Pomacentridae,Stegastes,2,,OzFish,False,False,544
+Sphyrna mokarran,Sphyrnidae,Sphyrna,2,,OzFish,False,False,545
+Stegastes albifasciatus,Pomacentridae,Stegastes,2,,OzFish,False,False,546
+Anampses twistii,Labridae,Anampses,2,,OzFish,False,False,547
+Amblyglyphidodon leucogaster,Pomacentridae,Amblyglyphidodon,2,,OzFish,False,False,548
+Thalassoma septemfasciatum,Labridae,Thalassoma,2,,OzFish,False,False,549
+Trachinotus blochii,Carangidae,Trachinotus,2,,OzFish,False,False,550
+Acanthochromis polyacanthus,Pomacentridae,Acanthochromis,2,,OzFish,False,False,551
+Zoramia viridiventer,Apogonidae,Zoramia,2,,OzFish,False,False,552

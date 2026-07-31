@@ -1,0 +1,50 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# logging.yaml — Logging and experiment tracking configuration
+# ──────────────────────────────────────────────────────────────────────────────
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  date_format: "%H:%M:%S"
+
+  # Console output
+  console: true
+
+  # File logging (inside experiment directory)
+  file: true
+  filename: "training.log"
+
+experiment:
+  # Base directory for all experiments
+  base_dir: "experiments"
+
+  # Experiment naming: "{base_name}_{timestamp}"
+  # e.g. "bioclip2_lora_r16_20260704_180000"
+  auto_name: true
+  base_name: "bioclip2_lora"
+
+  # Each experiment directory contains:
+  #   config/         — Copy of all config files used
+  #   checkpoints/    — Model checkpoints with descriptive names
+  #   logs/           — TensorBoard logs
+  #   metrics/        — CSV and JSON metric files
+  #   plots/          — Training curves, confusion matrices
+
+tensorboard:
+  enabled: true
+  # Logged per step
+  log_train_loss_every_n_steps: 10
+  # Logged per epoch
+  log_val_metrics: true
+  log_learning_rate: true
+  log_gpu_stats: true
+
+csv_logging:
+  enabled: true
+  filename: "training_history.csv"
+
+gpu_monitoring:
+  enabled: true
+  filename: "gpu_stats.csv"
+  # Log GPU stats every N training steps
+  log_interval_steps: 50

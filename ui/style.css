@@ -1,0 +1,1387 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   FishVision-AI — Premium Marine Research UI
+   Earthy · scientific · timeless. All colors via tokens — no hardcoded hex.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+/* ── 1. Design tokens ────────────────────────────────────────────────────── */
+:root {
+  --forest: {
+      {
+      FOREST
+    }
+  }
+
+  ;
+
+  --ocean: {
+      {
+      OCEAN
+    }
+  }
+
+  ;
+
+  --charcoal: {
+      {
+      CHARCOAL
+    }
+  }
+
+  ;
+
+  --surface: {
+      {
+      SURFACE
+    }
+  }
+
+  ;
+
+  --surface-2: {
+      {
+      SURFACE_2
+    }
+  }
+
+  ;
+
+  --surface-3: {
+      {
+      SURFACE_3
+    }
+  }
+
+  ;
+
+  --coral: {
+      {
+      CORAL
+    }
+  }
+
+  ;
+
+  --moss: {
+      {
+      MOSS
+    }
+  }
+
+  ;
+
+  --slate: {
+      {
+      SLATE
+    }
+  }
+
+  ;
+
+  --text: {
+      {
+      TEXT
+    }
+  }
+
+  ;
+
+  --muted: {
+      {
+      MUTED
+    }
+  }
+
+  ;
+
+  --border: {
+      {
+      BORDER
+    }
+  }
+
+  ;
+
+  --border-subtle: {
+      {
+      BORDER_SUBTLE
+    }
+  }
+
+  ;
+
+  --shadow: {
+      {
+      SHADOW
+    }
+  }
+
+  ;
+
+  --banner-ok-bg: {
+      {
+      BANNER_OK_BG
+    }
+  }
+
+  ;
+
+  --banner-ok-border: {
+      {
+      BANNER_OK_BORDER
+    }
+  }
+
+  ;
+
+  --banner-ok-text: {
+      {
+      BANNER_OK_TEXT
+    }
+  }
+
+  ;
+
+  --banner-warn-bg: {
+      {
+      BANNER_WARN_BG
+    }
+  }
+
+  ;
+
+  --banner-warn-border: {
+      {
+      BANNER_WARN_BORDER
+    }
+  }
+
+  ;
+
+  --banner-warn-text: {
+      {
+      BANNER_WARN_TEXT
+    }
+  }
+
+  ;
+
+  --input-bg: {
+      {
+      INPUT_BG
+    }
+  }
+
+  ;
+
+  --popover-bg: {
+      {
+      POPOVER_BG
+    }
+  }
+
+  ;
+
+  --icon-bg: {
+      {
+      ICON_BG
+    }
+  }
+
+  ;
+
+  --hero-badge-bg: {
+      {
+      HERO_BADGE_BG
+    }
+  }
+
+  ;
+
+  --track: {
+      {
+      TRACK
+    }
+  }
+
+  ;
+
+  --thumb: {
+      {
+      THUMB
+    }
+  }
+
+  ;
+
+  --disabled: {
+      {
+      DISABLED
+    }
+  }
+
+  ;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --font-head: 'Sora',
+  'Inter',
+  sans-serif;
+  --font-body: 'Inter',
+  sans-serif;
+  --panel-width: 392px;
+  --transition: 0.15s ease;
+}
+
+/* ── 2. Strip Streamlit chrome ───────────────────────────────────────────── */
+#MainMenu,
+footer,
+header[data-testid="stHeader"],
+[data-testid="stToolbar"],
+[data-testid="stDecoration"],
+[data-testid="stStatusWidget"],
+div[data-testid="stAppDeployButton"],
+[data-testid="collapsedControl"],
+#stDecoration,
+.viewerBadge_container__1QSob,
+.stAppDeployButton {
+  display: none !important;
+}
+
+.block-container {
+  padding-top: 1rem !important;
+  padding-bottom: 3rem !important;
+  max-width: 1180px;
+}
+
+html,
+body,
+[class*="css"],
+.stApp {
+  font-family: var(--font-body);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.stApp {
+  background: var(--surface);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.fv-head {
+  font-family: var(--font-head);
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+p,
+li,
+span,
+label,
+.stMarkdown {
+  color: var(--text);
+}
+
+/* ── 3. Navigation ───────────────────────────────────────────────────────── */
+.fv-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fv-logo {
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.fv-nav-title {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--forest);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.fv-nav-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
+/* Header icon buttons */
+[data-testid="column"] .stButton>button,
+[data-testid="column"] .stLinkButton>a {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--forest) !important;
+  min-height: 40px !important;
+  padding: 0.4rem !important;
+  transition: border-color var(--transition), color var(--transition), background var(--transition) !important;
+  box-shadow: none !important;
+}
+
+[data-testid="column"] .stButton>button:hover,
+[data-testid="column"] .stLinkButton>a:hover {
+  border-color: var(--coral) !important;
+  color: var(--coral) !important;
+  background: var(--surface-3) !important;
+}
+
+[data-testid="column"] .stButton>button:focus,
+[data-testid="column"] .stLinkButton>a:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ── 4. Hero ─────────────────────────────────────────────────────────────── */
+.fv-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--moss);
+  background: var(--hero-badge-bg);
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  margin-bottom: 0.85rem;
+}
+
+.fv-hero h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--forest);
+  line-height: 1.18;
+  margin: 0 0 0.55rem 0;
+}
+
+.fv-hero p,
+.fv-hero-copy {
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 32rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.fv-hero-illustration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fv-hero-illustration img {
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  opacity: 0.92;
+}
+
+/* ── 5. Banners ──────────────────────────────────────────────────────────── */
+.fv-banner {
+  display: flex;
+  margin-top: 20px;
+  align-items: flex-start;
+  gap: 0.55rem;
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin: 0.15rem 0 1rem 0;
+  border: 1px solid var(--border);
+}
+
+.fv-banner.ok {
+  background: var(--banner-ok-bg);
+  border-color: var(--banner-ok-border);
+  color: var(--banner-ok-text);
+}
+
+.fv-banner.warn {
+  background: var(--banner-warn-bg);
+  border-color: var(--banner-warn-border);
+  color: var(--banner-warn-text);
+}
+
+.fv-banner code {
+  background: var(--surface-3);
+  color: inherit;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+/* ── 6. Tabs ─────────────────────────────────────────────────────────────── */
+.stTabs [data-baseweb="tab-list"] {
+  gap: 0.35rem;
+  border-bottom: none;
+  margin-bottom: 1.25rem;
+  background: transparent;
+}
+
+.stTabs [data-baseweb="tab"] {
+  height: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px !important;
+  padding: 0.45rem 1.05rem;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.84rem;
+}
+
+.stTabs [data-baseweb="tab"] p {
+  font-size: 0.84rem;
+  color: inherit;
+}
+
+.stTabs [aria-selected="true"] {
+  background: var(--forest) !important;
+  color: var(--surface) !important;
+  border-color: var(--forest) !important;
+}
+
+.stTabs [aria-selected="true"] p {
+  color: var(--surface) !important;
+}
+
+.stTabs [data-baseweb="tab-highlight"],
+.stTabs [data-baseweb="tab-border"] {
+  display: none;
+}
+
+.stTabs [data-baseweb="tab-panel"] {
+  padding-top: 0.25rem;
+}
+
+/* ── 7. Upload zone ──────────────────────────────────────────────────────── */
+.fv-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--forest);
+  margin-bottom: 0.55rem;
+}
+
+.fv-hint {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.fv-illus {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  opacity: 0.88;
+}
+
+[data-testid="stFileUploader"] {
+  margin-bottom: 0.5rem;
+}
+
+[data-testid="stFileUploaderDropzone"] {
+  background: var(--surface-2) !important;
+  border: 1px dashed var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 1.5rem !important;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+[data-testid="stFileUploaderDropzone"]:hover {
+  border-color: var(--slate) !important;
+  background: var(--surface-3) !important;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] svg {
+  display: none;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] span {
+  font-family: var(--font-head);
+  color: var(--forest) !important;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"] small {
+  color: var(--muted) !important;
+}
+
+[data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] {
+  background: var(--forest) !important;
+  color: var(--surface) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  font-size: 0.84rem !important;
+}
+
+[data-testid="stFileUploaderDropzone"] [data-testid="stBaseButton-secondary"] * {
+  color: var(--surface) !important;
+}
+
+[data-testid="stFileUploaderFileName"] {
+  color: var(--text) !important;
+}
+
+/* ── 8. Metric cards ─────────────────────────────────────────────────────── */
+.fv-metric-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin: 0.25rem 0 1.25rem 0;
+}
+
+.fv-metric-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fv-metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--icon-bg);
+  color: var(--forest);
+}
+
+.fv-metric-val {
+  font-family: var(--font-head);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--forest);
+  line-height: 1.1;
+}
+
+.fv-metric-lbl {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-top: 2px;
+}
+
+/* ── 9. Section headers ──────────────────────────────────────────────────── */
+.fv-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--forest);
+  margin: 1.35rem 0 0.75rem 0;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ── 10. Species cards ───────────────────────────────────────────────────── */
+.fv-species-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.55rem;
+  transition: border-color var(--transition);
+}
+
+.fv-species-card:hover {
+  border-color: var(--slate);
+}
+
+.fv-species-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.fv-species-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.fv-species-tag {
+  font-size: 0.65rem;
+  color: var(--muted);
+  background: var(--surface-3);
+  border: 1px solid var(--border-subtle);
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.fv-species-sci {
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-top: 0.12rem;
+  font-style: italic;
+}
+
+.fv-conf-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.5rem;
+}
+
+.fv-conf-track {
+  flex: 1;
+  background: var(--track);
+  border-radius: 2px;
+  height: 4px;
+}
+
+.fv-conf-fill {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--moss);
+}
+
+.fv-conf-num {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── 11. Timeline ────────────────────────────────────────────────────────── */
+.fv-timeline {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.fv-timeline::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--border);
+}
+
+.fv-tl-item {
+  position: relative;
+  padding-bottom: 0.95rem;
+}
+
+.fv-tl-item::before {
+  content: "";
+  position: absolute;
+  left: -1.5rem;
+  top: 4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1.5px solid var(--coral);
+}
+
+.fv-tl-title {
+  font-weight: 600;
+  font-size: 0.84rem;
+  color: var(--text);
+}
+
+.fv-tl-meta {
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+/* ── 12. Settings / About popover shell ──────────────────────────────────── */
+[data-testid="stPopoverBody"] {
+  width: var(--panel-width) !important;
+  min-width: var(--panel-width) !important;
+  max-width: var(--panel-width) !important;
+  max-height: 80vh !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 12px 40px var(--shadow) !important;
+  padding: 0 !important;
+  background: var(--popover-bg) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+[data-testid="stPopoverBody"]>div {
+  max-height: 80vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+[data-testid="stPopoverBody"] [data-testid="stVerticalBlock"] {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: 80vh !important;
+  padding: 0 1.35rem 1.35rem !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+[data-testid="stPopoverBody"] [data-testid="stVerticalBlock"]::-webkit-scrollbar {
+  width: 5px;
+}
+
+[data-testid="stPopoverBody"] [data-testid="stVerticalBlock"]::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.fv-settings-header {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--popover-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 1.15rem 1.35rem 1rem;
+  margin: 0 -1.35rem 0.85rem -1.35rem;
+}
+
+.fv-settings-header-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--forest);
+}
+
+.fv-settings-sub {
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+}
+
+.fv-settings-body {
+  padding: 0;
+}
+
+.fv-popover-content {
+  padding: 1.15rem 1.35rem 1.35rem;
+}
+
+.fv-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: #F5F7FA;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 1.1rem 0 0.65rem 0;
+}
+
+.fv-panel-heading:first-child {
+  margin-top: 0.35rem;
+}
+
+.fv-panel-divider {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 1.1rem 0;
+}
+
+.fv-field-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0.35rem 0 0 0;
+  padding: 0.55rem 0.65rem;
+  background: var(--surface-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  min-height: 3.25rem;
+}
+
+.fv-field-note--hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* YOLO section — fixed height prevents panel resize on toggle */
+.fv-yolo-slot {
+  min-height: 292px;
+}
+
+.fv-yolo-slot .fv-field-note {
+  margin-top: 0.5rem;
+}
+
+.fv-about-text {
+  font-size: 0.84rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.fv-about-meta {
+  font-size: 0.84rem;
+  color: var(--text);
+  line-height: 1.65;
+}
+
+.fv-about-meta strong {
+  color: var(--forest);
+  font-weight: 600;
+}
+
+/* ── 13. Streamlit widgets — global theming ──────────────────────────────── */
+
+/* Labels */
+.stTextInput label,
+.stNumberInput label,
+.stSelectbox label,
+.stSlider label,
+.stToggle label,
+.stCheckbox label,
+[data-testid="stWidgetLabel"] {
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: var(--text) !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.stCaption,
+[data-testid="stCaptionContainer"],
+small {
+  color: var(--muted) !important;
+  font-size: 0.76rem !important;
+}
+
+/* Text inputs */
+.stTextInput input,
+.stNumberInput input {
+  background: var(--input-bg) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 0.84rem !important;
+  padding: 0.5rem 0.65rem !important;
+  transition: border-color var(--transition) !important;
+  box-shadow: none !important;
+}
+
+.stTextInput input:focus,
+.stNumberInput input:focus {
+  border-color: var(--slate) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.stTextInput input:disabled,
+.stNumberInput input:disabled {
+  opacity: 0.55;
+  color: var(--disabled) !important;
+  background: var(--surface-3) !important;
+}
+
+/* Select / dropdown */
+[data-baseweb="select"]>div {
+  background: var(--input-bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 0.84rem !important;
+}
+
+[data-baseweb="select"] svg {
+  fill: var(--muted) !important;
+}
+
+[data-baseweb="popover"] {
+  background: var(--popover-bg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: 0 8px 24px var(--shadow) !important;
+}
+
+[data-baseweb="menu"] {
+  background: var(--popover-bg) !important;
+}
+
+[data-baseweb="menu"] li {
+  color: var(--text) !important;
+  background: transparent !important;
+}
+
+[data-baseweb="menu"] li:hover,
+[data-baseweb="menu"] li[data-highlighted="true"] {
+  background: var(--surface-3) !important;
+}
+
+/* Toggle */
+.stToggle [data-testid="stWidgetLabel"] {
+  font-weight: 500 !important;
+}
+
+[data-testid="stToggleSwitch"] {
+  background: var(--track) !important;
+}
+
+[data-testid="stToggleSwitch"][aria-checked="true"] {
+  background: var(--moss) !important;
+}
+
+/* Sliders — hide orange thumb value boxes, use plain text below */
+.stSlider {
+  padding: 0.15rem 0 0.1rem 0 !important;
+}
+
+.stSlider [data-testid="stSliderThumbValue"],
+.stSlider [data-testid="stThumbValue"],
+.stSlider [data-baseweb="tooltip"],
+.stSlider div[data-testid="stTickBarMin"],
+.stSlider div[data-testid="stTickBarMax"],
+.stSlider [class*="thumbValue"],
+.stSlider [class*="ThumbValue"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.stSlider [data-baseweb="slider"] {
+  margin-top: 0.35rem;
+}
+
+.stSlider [data-baseweb="slider"]>div>div[data-testid="stSliderTrack"] {
+  background: var(--track) !important;
+  height: 3px !important;
+}
+
+.stSlider [data-baseweb="slider"]>div>div[data-testid="stSliderTrack"]>div {
+  background: var(--moss) !important;
+}
+
+.stSlider [data-baseweb="slider"] div[role="slider"],
+.stSlider [data-baseweb="slider"] [data-testid="stSliderThumb"] {
+  background: var(--thumb) !important;
+  border: 2px solid var(--surface-2) !important;
+  width: 14px !important;
+  height: 14px !important;
+  box-shadow: none !important;
+}
+
+.stSlider[data-disabled="true"] {
+  opacity: 0.5;
+}
+
+.fv-slider-val {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: -0.15rem 0 0.65rem 0;
+  letter-spacing: 0.01em;
+}
+
+/* Buttons */
+.stButton>button,
+.stDownloadButton>button,
+.stLinkButton>a {
+  background: var(--surface-2) !important;
+  color: var(--forest) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  font-size: 0.84rem !important;
+  transition: border-color var(--transition), color var(--transition), background var(--transition) !important;
+  box-shadow: none !important;
+}
+
+.stButton>button:hover,
+.stDownloadButton>button:hover {
+  border-color: var(--coral) !important;
+  color: var(--coral) !important;
+  background: var(--surface-3) !important;
+}
+
+.stButton>button:focus,
+.stDownloadButton>button:focus {
+  box-shadow: none !important;
+}
+
+/* Expanders */
+[data-testid="stExpander"] {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--surface-2) !important;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+[data-testid="stExpander"] summary {
+  font-weight: 500;
+  font-size: 0.86rem;
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+[data-testid="stExpander"] summary:hover {
+  color: var(--forest);
+}
+
+[data-testid="stExpanderDetails"] {
+  background: var(--surface-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Dataframes */
+[data-testid="stDataFrame"],
+[data-testid="stDataFrame"]>div {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border) !important;
+  overflow: hidden;
+  background: var(--surface-2) !important;
+}
+
+[data-testid="stDataFrame"] [data-testid="glideDataEditor"] {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+}
+
+/* Charts inherit from Streamlit — soften grid */
+[data-testid="stVegaLiteChart"] {
+  background: transparent;
+}
+
+/* Spinner */
+.stSpinner>div {
+  border-top-color: var(--moss) !important;
+}
+
+.stSpinner>div+div {
+  color: var(--muted) !important;
+  font-size: 0.84rem !important;
+}
+
+/* Tooltips */
+[data-baseweb="tooltip"] {
+  background: var(--charcoal) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 0.76rem !important;
+  box-shadow: 0 4px 16px var(--shadow) !important;
+}
+
+/* Material icon inputs */
+[data-testid="stTextInputRootElement"] svg,
+[data-testid="stNumberInput"] svg {
+  fill: var(--muted) !important;
+}
+
+/* ── Dark mode & Streamlit base-input overrides ─────────────────────────── */
+[data-fv-theme="dark"] .stApp,
+html[data-fv-theme="dark"] .stApp {
+  background: var(--surface);
+}
+
+.stTextInput>div,
+.stNumberInput>div,
+.stSelectbox>div,
+.stMultiSelect>div {
+  background: transparent !important;
+}
+
+div[data-baseweb="base-input"],
+div[data-baseweb="input"],
+[data-baseweb="input"] input {
+  background-color: var(--input-bg) !important;
+  color: var(--text) !important;
+}
+
+.stNumberInput button {
+  background: var(--surface-3) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.stNumberInput button:hover {
+  background: var(--border-subtle) !important;
+  color: var(--forest) !important;
+}
+
+[data-testid="stWidgetLabel"] p,
+[data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li {
+  color: var(--text);
+}
+
+[data-testid="stMarkdownContainer"] code {
+  background: var(--surface-3) !important;
+  color: var(--forest) !important;
+  border: 1px solid var(--border-subtle);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+
+[data-testid="stImage"] img,
+[data-testid="stImage"] {
+  border-radius: var(--radius-md);
+}
+
+[data-testid="stAlert"] {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Popover trigger buttons match theme */
+[data-testid="stPopover"]>button {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--forest) !important;
+}
+
+[data-testid="stPopover"]>button:hover {
+  border-color: var(--slate) !important;
+  background: var(--surface-3) !important;
+}
+
+/* File uploader file list */
+[data-testid="stFileUploaderFile"] {
+  background: var(--surface-3) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+[data-testid="stFileUploaderFile"] span,
+[data-testid="stFileUploaderFile"] small {
+  color: var(--text) !important;
+}
+
+/* Glide dataframe cells — dark surfaces */
+[data-testid="stDataFrame"] [role="gridcell"],
+[data-testid="stDataFrame"] [role="columnheader"] {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+/* Vega chart text */
+[data-testid="stVegaLiteChart"] svg text {
+  fill: var(--muted) !important;
+}
+
+/* Horizontal rules inside markdown */
+[data-testid="stMarkdownContainer"] hr {
+  border-color: var(--border-subtle);
+  margin: 1rem 0;
+}
+
+/* Widget vertical spacing consistency */
+[data-testid="stVerticalBlock"]>div {
+  gap: 0.35rem;
+}
+
+.stTextInput,
+.stNumberInput,
+.stSelectbox,
+.stSlider,
+.stToggle {
+  margin-bottom: 0.15rem !important;
+}
+
+/* Performance metrics in panel */
+.fv-perf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.fv-perf-stat {
+  text-align: center;
+  padding: 0.55rem 0.35rem;
+  background: var(--surface-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.fv-perf-stat strong {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.2rem;
+}
+
+.fv-perf-stat span {
+  font-family: var(--font-head);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--forest);
+}
+
+/* ── 14. Accuracy rings ──────────────────────────────────────────────────── */
+.fv-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.fv-ring-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.fv-ring-wrap svg .fv-ring-track {
+  stroke: var(--track);
+  fill: none;
+}
+
+.fv-ring-coral svg .fv-ring-fill {
+  stroke: var(--coral);
+  fill: none;
+}
+
+.fv-ring-coral svg .fv-ring-text {
+  fill: var(--coral);
+  stroke: none;
+}
+
+.fv-ring-moss svg .fv-ring-fill {
+  stroke: var(--moss);
+  fill: none;
+}
+
+.fv-ring-moss svg .fv-ring-text {
+  fill: var(--moss);
+  stroke: none;
+}
+
+/* ── 15. Watermark + footer ──────────────────────────────────────────────── */
+.fv-watermark {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background:
+    radial-gradient(circle at 12% 18%, var(--moss) 0%, transparent 42%),
+    radial-gradient(circle at 88% 82%, var(--coral) 0%, transparent 38%);
+}
+
+.fv-footer {
+  margin-top: 2.5rem;
+  padding: 1.15rem 0 0.35rem;
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+  font-size: 0.74rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+/* ── 15.5 Empty States & Assets ───────────────────────────────────────────── */
+.fv-empty-title {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--forest);
+  margin-bottom: 0.2rem;
+  text-align: center;
+}
+
+.fv-empty-subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.fv-empty-video,
+.fv-hero-illustration img {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px var(--shadow);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  width: 100%;
+  display: block;
+}
+
+.fv-empty-video-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 16. Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .fv-metric-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  .fv-hero h1 {
+    font-size: 1.65rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  [data-testid="stPopoverBody"] {
+    width: min(var(--panel-width), calc(100vw - 2rem)) !important;
+    min-width: min(var(--panel-width), calc(100vw - 2rem)) !important;
+    max-width: min(var(--panel-width), calc(100vw - 2rem)) !important;
+  }
+
+  .fv-metric-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fv-perf-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .fv-nav-sub {
+    display: none;
+  }
+}

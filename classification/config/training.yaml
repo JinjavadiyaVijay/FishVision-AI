@@ -1,0 +1,53 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# training.yaml — Training hyperparameters
+# ──────────────────────────────────────────────────────────────────────────────
+
+training:
+  epochs: 30
+  batch_size: 8
+  gradient_accumulation_steps: 4
+  # DataLoader workers: 2 is optimal for Windows + RTX 3050 Laptop.
+  # Windows spawns full processes (not fork), so >4 workers causes
+  # handle exhaustion and memory pressure. 2 workers with
+  # prefetch_factor=2 and pin_memory=True hides I/O latency well.
+  # Set to 0 only for debugging multiprocessing issues.
+  num_workers: 2
+  seed: 42
+  deterministic: true
+
+optimizer:
+  type: "adamw"
+  learning_rate: 2.0e-4
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+
+scheduler:
+  type: "cosine_with_warmup"
+  warmup_steps: 200
+  min_lr_ratio: 0.01
+
+precision:
+  mixed_precision: true
+  # "fp16" or "bf16" (bf16 requires Ampere+ GPU; RTX 3050 uses fp16)
+  dtype: "fp16"
+  gradient_clip_max_norm: 1.0
+
+loss:
+  type: "cross_entropy"
+  label_smoothing: 0.1
+  use_class_weights: true
+
+early_stopping:
+  enabled: true
+  patience: 7
+  monitor: "val_accuracy"
+  min_delta: 0.001
+  mode: "max"
+
+checkpointing:
+  save_best_accuracy: true
+  save_best_f1: true
+  save_last: true
+  # Naming: "{experiment_name}_epoch{N}_{metric}{value}"
+  descriptive_names: true

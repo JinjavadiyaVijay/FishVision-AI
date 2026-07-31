@@ -1,22 +1,60 @@
-# Dataset
+# ── Datasets (too large for git) ─────────────────────────────────
 train/
 valid/
 test/
-OzFish/
-# logs 
+
+# ── Logs ─────────────────────────────────────────────────────────
 logs/
 
-# Extra models
+# ── Models ───────────────────────────────────────────────────────
 models/last.pt
 models/yolo26n.pt
 models/yolov8n.pt
+models/bioclip/     # BioCLIP fine-tuned weights
 
-# Python
+# ── Python ───────────────────────────────────────────────────────
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
 
-# Environment
+# ── Environment ──────────────────────────────────────────────────
 .env
+*.env
 
-# Private Documentation
+# ── IDE ──────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.crswap
+*.pdf
+
+# ── Private ──────────────────────────────────────────────────────
 private_docs/
+
+# ── Datasets (generated data) ────────────────────────────────────
+OzFish/
+data_sets/
+datasets/raw/
+datasets/processed/
+datasets/cache/
+datasets/reports/
+datasets/statistics/
+datasets/exports/
+datasets/metadata/split_manifest.json
+
+# ── Training outputs ─────────────────────────────────────────────
+checkpoints/
+runs/
+outputs/
+experiments/
+
+# ── Archive (local history, not for git) ─────────────────────────
+archive/
+
+# ── Local virtual environments ───────────────────────────────────
+venv/
+.venv/
+env/

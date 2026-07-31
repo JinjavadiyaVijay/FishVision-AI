@@ -1,135 +1,144 @@
 """
-app.py — Fish Species Detection System (Streamlit front-end)
+app.py — FishVision-AI  (BioCLIP 2 Primary Classifier + YOLO Detection)
+
+Orchestrator only. Every pipeline call, cached loader, and result field is
+unchanged from the original app — presentation now lives entirely in ui/
+(css, svg, components, layout, inference, performance).
 
 Run with:
     streamlit run app.py
 """
-
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import streamlit as st
-from PIL import Image
 
-from src.detector import load_model, run_inference
-from src.predictor import detections_to_dataframe, summary_stats
+from src.pipeline import FishPipeline
 from src.utils import resolve_model_path
-from src.visualization import (
-    render_annotated_image,
-    render_class_counts,
-    render_detection_table,
-    render_metrics,
-)
 
-# ---------------------------------------------------------------------------
-# Page config — must be the first Streamlit call
-# ---------------------------------------------------------------------------
+from ui import css, components as ui, layout, inference, performance
+
+# ── Page config ───────────────────────────────────────────────────────────────
+_FAVICON = Path(__file__).resolve().parent / "assets" / "favicon.svg"
 st.set_page_config(
-    page_title="Fish Detection System",
-    page_icon="🐠",
+    page_title="FishVision-AI",
+    page_icon=str(_FAVICON) if _FAVICON.exists() else "🐠",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
-DEFAULT_MODEL_PATH = resolve_model_path("models/best.pt")
+# ── Project paths ─────────────────────────────────────────────────────────────
+_ROOT = Path(__file__).resolve().parent
+_EVAL_JSON = (
+    _ROOT / "experiments/bioclip2_full_20260716_160143/plots/evaluation_test.json"
+)
+_DEFAULT_YOLO = resolve_model_path("models/best.pt")
 
-# ---------------------------------------------------------------------------
-# Sidebar controls
-# ---------------------------------------------------------------------------
-with st.sidebar:
-    st.title("⚙️ Settings")
+# ── Theme (presentation-only state) ───────────────────────────────────────────
+if "fv_theme" not in st.session_state:
+    st.session_state.fv_theme = "light"
 
-    st.subheader("Model")
-    model_path_str = st.text_input(
-        "Weights path",
-        value=str(DEFAULT_MODEL_PATH),
-        help="Path to a YOLOv8 .pt file. The default model lives in models/best.pt.",
+st.html(css.get_css(st.session_state.fv_theme))
+st.html('<div class="fv-watermark"></div>')
+
+
+# ── Load evaluation results (species accuracy) ────────────────────────────────
+@st.cache_data
+def load_eval_data() -> dict | None:
+    if _EVAL_JSON.exists():
+        return json.loads(_EVAL_JSON.read_text(encoding="utf-8"))
+    return None
+
+
+# ── Load pipeline (cached across sessions) ───────────────────────────────────
+@st.cache_resource
+def get_pipeline(yolo_path: str, top_k: int, preload_yolo: bool) -> FishPipeline:
+    p = FishPipeline(
+        yolo_model_path=yolo_path if preload_yolo else None,
+        bioclip_enabled=True,
+        bioclip_top_k=top_k,
     )
-    confidence = st.slider("Confidence threshold", 0.05, 0.95, 0.25, 0.05)
-    iou = st.slider("IoU threshold (NMS)", 0.10, 0.95, 0.45, 0.05)
+    p.preload(yolo=preload_yolo, bioclip=False)
+    return p
 
-    st.divider()
 
-    st.subheader("Measurement (optional)")
-    cm_per_pixel = st.number_input(
-        "Centimetres per pixel",
-        min_value=0.0,
-        value=0.0,
-        step=0.001,
-        format="%.4f",
-        help=(
-            "Set this once you have depth / camera calibration data. "
-            "Leave at 0 to skip length and life-stage estimation."
-        ),
-    )
-    adult_threshold_cm = st.number_input(
-        "Adult length threshold (cm)",
-        min_value=0.0,
-        value=10.0,
-        step=0.5,
-        help="Fish whose estimated length exceeds this value are labelled 'Adult'.",
-    )
+# ─────────────────────────────────────────────────────────────────────────────
+# HEADER + FLOATING SETTINGS PANEL  (replaces st.sidebar entirely)
+# ─────────────────────────────────────────────────────────────────────────────
+eval_data = load_eval_data()
+settings = layout.render_page_header(str(_DEFAULT_YOLO), eval_data)
 
-    st.divider()
-    st.caption("Fish Detection System · YOLOv8n · 13 species")
+yolo_path = settings["yolo_path"]
+use_yolo = settings["use_yolo"]
+conf_thresh = settings["conf_thresh"]
+iou_thresh = settings["iou_thresh"]
+top_k = settings["top_k"]
+cm_per_px = settings["cm_per_px"]
+adult_cm = settings["adult_cm"]
 
-# ---------------------------------------------------------------------------
-# Main content
-# ---------------------------------------------------------------------------
-st.title("🐠 Fish Species Detection")
-st.caption("Upload a photo and the model will identify and count fish species.")
-
-# Model loading — cached so it only runs once per session
-model_file = Path(model_path_str)
-if not model_file.exists():
-    st.error(
-        f"**Model not found:** `{model_file}`\n\n"
-        "Make sure `best.pt` is inside the `models/` directory, "
-        "or update the path in the sidebar."
+# ── Load pipeline ─────────────────────────────────────────────────────────────
+if use_yolo and not Path(yolo_path).exists():
+    st.markdown(
+        ui.banner("warn", "alert", f"YOLO weights not found at <code>{yolo_path}</code>. Check the models/ directory."),
+        unsafe_allow_html=True,
     )
     st.stop()
 
 try:
-    model = st.cache_resource(load_model)(str(model_file))
+    pipeline = get_pipeline(yolo_path, top_k, preload_yolo=use_yolo)
 except Exception as exc:
-    st.error(f"**Could not load model:** {exc}")
+    st.markdown(ui.banner("warn", "alert", f"Failed to load pipeline: {exc}"), unsafe_allow_html=True)
     st.stop()
 
-# Image upload
-uploaded_file = st.file_uploader(
-    "Upload a fish image",
-    type=["jpg", "jpeg", "png", "bmp", "webp"],
-    help="Supported formats: JPG, JPEG, PNG, BMP, WebP",
-)
-
-if uploaded_file is None:
-    st.info("👆 Upload an image to get started.")
+if not use_yolo and not pipeline.bioclip_checkpoint_available:
+    st.markdown(
+        ui.banner("warn", "alert", "BioCLIP-only mode requires a BioCLIP checkpoint. Train or place weights in models/bioclip_production/."),
+        unsafe_allow_html=True,
+    )
     st.stop()
 
-# ---------------------------------------------------------------------------
-# Inference
-# ---------------------------------------------------------------------------
-image = Image.open(uploaded_file).convert("RGB")
+bioclip_ok = pipeline.bioclip_available
+bioclip_ready = pipeline.bioclip_checkpoint_available
+if bioclip_ok:
+    st.markdown(
+        ui.banner(
+            "ok",
+            "check",
+            f"BioCLIP 2 loaded · {pipeline.num_bioclip_species} species · "
+            f"72.6% Top-1 · 91.7% Top-5",
+        ),
+        unsafe_allow_html=True,
+    )
+elif bioclip_ready:
+    st.markdown(
+        ui.banner(
+            "ok",
+            "check",
+            "BioCLIP 2 ready · loads automatically when fish are detected · "
+            "157 species · 72.6% Top-1",
+        ),
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        ui.banner("warn", "alert", "BioCLIP checkpoint not found — running in YOLO-only mode"),
+        unsafe_allow_html=True,
+    )
 
-with st.spinner("Running detection…"):
-    result = run_inference(model, image, conf=confidence, iou=iou)
 
-df = detections_to_dataframe(result, cm_per_pixel, adult_threshold_cm)
-stats = summary_stats(df)
-annotated_image = result.plot()
+# ─────────────────────────────────────────────────────────────────────────────
+# TABS
+# ─────────────────────────────────────────────────────────────────────────────
+tab_infer, tab_accuracy = st.tabs(["Identify Fish", "Species Accuracy"])
 
-# ---------------------------------------------------------------------------
-# Results
-# ---------------------------------------------------------------------------
-render_metrics(stats["total"], stats["species"], stats["avg_confidence"])
+with tab_infer:
+    inference.render_inference_tab(
+        pipeline, conf_thresh, iou_thresh, cm_per_px, adult_cm, use_yolo=use_yolo,
+    )
 
-st.divider()
+with tab_accuracy:
+    performance.render_performance_tab(eval_data)
 
-img_col, summary_col = st.columns([2, 1], gap="large")
-with img_col:
-    render_annotated_image(annotated_image)
-with summary_col:
-    render_class_counts(df)
-
-render_detection_table(df, cm_per_pixel)
+layout.render_footer()
