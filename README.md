@@ -1,19 +1,36 @@
 <div align="center">
 
-# FishVision-AI
+  <img src="assets/animation_1.gif" width="850" alt="FishVision-AI Demo">
 
-### Marine fish detection, species classification, and biometric estimation
+  <h1> FishVision-AI</h1>
 
-**Streamlit UI - YOLOv8 localization - BioCLIP 2 species recognition - OAK-D Pro depth workflow**
+  <h3>Marine Fish Detection, Species Classification & Biometric Estimation</h3>
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Web%20UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-Training%20%26%20Inference-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![Ultralytics](https://img.shields.io/badge/Ultralytics-YOLOv8-111111?style=for-the-badge)](https://www.ultralytics.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-2E7D32?style=for-the-badge)](LICENSE)
+  <p>
+    <strong>
+      Streamlit UI • YOLOv8 Localization • BioCLIP 2 Species Recognition • OAK-D Pro Depth Workflow
+    </strong>
+  </p>
+
+  <p>
+    <a href="https://www.python.org/">
+      <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+    </a>
+    <a href="https://streamlit.io/">
+      <img src="https://img.shields.io/badge/Streamlit-Web%20UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white" alt="Streamlit">
+    </a>
+    <a href="https://pytorch.org/">
+      <img src="https://img.shields.io/badge/PyTorch-Training%20%26%20Inference-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch">
+    </a>
+    <a href="https://www.ultralytics.com/">
+      <img src="https://img.shields.io/badge/Ultralytics-YOLOv8-111111?style=for-the-badge" alt="YOLOv8">
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/License-MIT-2E7D32?style=for-the-badge" alt="MIT License">
+    </a>
+  </p>
 
 </div>
-
 ---
 
 ## Project Overview
